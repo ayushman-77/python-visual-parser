@@ -1,0 +1,14 @@
+package com.compiler.lexer;
+
+public enum TokenType {
+    INT_LIT, FLOAT_LIT, STRING_LIT, BOOL_LIT,
+    IDENT,
+    FOR, IN, PRINT,
+    PLUS, MINUS, STAR, SLASH,
+    ASSIGN, PLUS_ASSIGN, MINUS_ASSIGN,
+    LPAREN, RPAREN, LBRACKET, RBRACKET,
+    COMMA, COLON,
+    NEWLINE, INDENT, DEDENT,
+    EOF,
+    UNKNOWN
+}
