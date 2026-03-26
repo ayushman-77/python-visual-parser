@@ -6,19 +6,19 @@ export const DEFAULT_CODE = "";
 export default function Editor({ code, onChange, onCompile, loading }) {
   const fileRef = useRef();
 
-  function handleFileUpload(e) {
+  function handleUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => onChange(ev.target.result);
+    reader.onload = ev => onChange(ev.target.result);
     reader.readAsText(file);
     e.target.value = "";
   }
 
-  function handleEditorMount(editor, monaco) {
+  function onMount(editor, monaco) {
     monaco.languages.register({ id: "pylite" });
     monaco.languages.setMonarchTokensProvider("pylite", {
-      keywords: ["for", "in", "print", "True", "False"],
+      keywords: ["for","in","print","True","False"],
       tokenizer: {
         root: [
           [/#.*$/,               "comment"],
@@ -38,92 +38,67 @@ export default function Editor({ code, onChange, onCompile, loading }) {
       base: "vs-dark",
       inherit: true,
       rules: [
-        { token: "comment",      foreground: "656d76", fontStyle: "italic" },
+        { token: "comment",      foreground: "4b5675", fontStyle: "italic" },
         { token: "string",       foreground: "a5d6ff" },
-        { token: "keyword",      foreground: "ff7b72", fontStyle: "bold" },
-        { token: "constant",     foreground: "79c0ff" },
-        { token: "number",       foreground: "ffa657" },
-        { token: "number.float", foreground: "ffa657" },
-        { token: "identifier",   foreground: "e6edf3" },
-        { token: "operator",     foreground: "ff7b72" },
-        { token: "delimiter",    foreground: "8b949e" },
+        { token: "keyword",      foreground: "c084fc", fontStyle: "bold" },
+        { token: "constant",     foreground: "818cf8" },
+        { token: "number",       foreground: "fb923c" },
+        { token: "number.float", foreground: "fb923c" },
+        { token: "identifier",   foreground: "e2e8f0" },
+        { token: "operator",     foreground: "f472b6" },
+        { token: "delimiter",    foreground: "94a3b8" },
       ],
       colors: {
-        "editor.background":                   "#0d1117",
-        "editor.foreground":                   "#e6edf3",
-        "editorLineNumber.foreground":         "#484f58",
-        "editorLineNumber.activeForeground":   "#8b949e",
-        "editor.lineHighlightBackground":      "#161b22",
-        "editorCursor.foreground":             "#4493f8",
-        "editor.selectionBackground":          "#264f78",
-        "editorIndentGuide.background1":        "#21262d",
-        "editorIndentGuide.activeBackground1":  "#30363d",
-        "editorGutter.background":             "#0d1117",
+        "editor.background":                   "#0a0a12",
+        "editor.foreground":                   "#e2e8f0",
+        "editorLineNumber.foreground":         "#2e2c4a",
+        "editorLineNumber.activeForeground":   "#64748b",
+        "editor.lineHighlightBackground":      "#0f0e1a",
+        "editorCursor.foreground":             "#818cf8",
+        "editor.selectionBackground":          "#1e1b4b",
+        "editorIndentGuide.background1":        "#1e1c2e",
+        "editorIndentGuide.activeBackground1":  "#2d2b45",
+        "editorGutter.background":             "#0a0a12",
+        "editor.lineHighlightBorder":          "#0f0e1a",
       },
     });
 
     monaco.editor.setTheme("compiler-dark");
 
-    editor.addCommand(
-      monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-      onCompile
-    );
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, onCompile);
 
-    const placeholderDeco = editor.createDecorationsCollection([]);
-
-    function updatePlaceholder() {
-      const isEmpty = editor.getValue().trim() === "";
-      if (isEmpty) {
-        placeholderDeco.set([{
-          range: new monaco.Range(1, 1, 1, 1),
+    // Placeholder decoration
+    const deco = editor.createDecorationsCollection([]);
+    const update = () => {
+      if (editor.getValue().trim() === "") {
+        deco.set([{
+          range: new monaco.Range(1,1,1,1),
           options: {
             isWholeLine: true,
             before: {
-              content: "  # Write your code here or upload a .py file…",
+              content: "  # Write or upload your code, then press ▶ Run…",
               inlineClassName: "monaco-placeholder",
             },
           },
         }]);
       } else {
-        placeholderDeco.clear();
+        deco.clear();
       }
-    }
-
-    updatePlaceholder();
-    editor.onDidChangeModelContent(updatePlaceholder);
+    };
+    update();
+    editor.onDidChangeModelContent(update);
   }
 
   return (
-    <div className="editor-pane" style={{ width: "100%", height: "100%" }}>
-      <div className="pane-header">
-        <span className="pane-file-dot" />
+    <div style={{ display:"flex", flexDirection:"column", height:"100%", overflow:"hidden" }}>
+      <div className="pane-head">
+        <span className="pane-dot" />
         <strong>editor.py</strong>
-        <span className="pane-hint">Ctrl + Enter to compile</span>
-        <div className="pane-header-actions">
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".py,.txt"
-            style={{ display: "none" }}
-            onChange={handleFileUpload}
-          />
-          <button
-            className="btn btn-secondary"
-            onClick={() => fileRef.current.click()}
-            title="Upload a .py file"
-          >
-            <span>📂</span> Upload .py
-          </button>
-          <button
-            className="btn btn-primary"
-            onClick={onCompile}
-            disabled={loading || !code?.trim()}
-            title="Compile (Ctrl+Enter)"
-          >
-            {loading
-              ? <><span className="btn-spinner" /> Compiling…</>
-              : <><span>▶</span> Run</>
-            }
+        <span className="pane-hint">Ctrl + Enter to run</span>
+        <div className="pane-actions">
+          <input ref={fileRef} type="file" accept=".py,.txt" style={{ display:"none" }} onChange={handleUpload} />
+          <button className="btn btn-ghost" style={{ fontSize:12, padding:"5px 11px" }} onClick={() => fileRef.current.click()}>
+            📂 Upload .py
           </button>
         </div>
       </div>
@@ -132,11 +107,11 @@ export default function Editor({ code, onChange, onCompile, loading }) {
         <MonacoEditor
           language="pylite"
           value={code}
-          onChange={(val) => onChange(val ?? "")}
-          onMount={handleEditorMount}
+          onChange={val => onChange(val ?? "")}
+          onMount={onMount}
           options={{
             fontSize:                   14,
-            fontFamily:                 "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+            fontFamily:                 "'JetBrains Mono','Fira Code',Consolas,monospace",
             fontLigatures:              true,
             lineHeight:                 23,
             minimap:                    { enabled: false },
@@ -153,7 +128,7 @@ export default function Editor({ code, onChange, onCompile, loading }) {
             bracketPairColorization:    { enabled: true },
             guides:                     { indentation: true, bracketPairs: true },
             overviewRulerLanes:         0,
-            scrollbar:                  { verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
+            scrollbar:                  { verticalScrollbarSize: 5, horizontalScrollbarSize: 5 },
           }}
           theme="compiler-dark"
         />

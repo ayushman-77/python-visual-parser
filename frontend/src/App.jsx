@@ -2,16 +2,17 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Editor, { DEFAULT_CODE } from "./components/Editor.jsx";
 import ResultPanel from "./components/ResultPanel.jsx";
 
-const API = "/api";
-const STATE = { IDLE: "idle", COMPILING: "compiling", DONE: "done", VIEWING: "viewing" };
+const API    = "/api";
+const PHASE  = { IDLE:"idle", RUNNING:"running", DONE:"done" };
 
 export default function App() {
-  const [code,        setCode]       = useState(DEFAULT_CODE);
-  const [result,      setResult]     = useState(null);
-  const [phase,       setPhase]      = useState(STATE.IDLE);
-  const [apiStatus,   setApiStatus]  = useState("unknown");
-  const [editorWidth, setEditorWidth]= useState(50);
+  const [code,      setCode]      = useState(DEFAULT_CODE);
+  const [result,    setResult]    = useState(null);
+  const [phase,     setPhase]     = useState(PHASE.IDLE);
+  const [apiStatus, setApiStatus] = useState("unknown");
+  const [leftWidth, setLeftWidth] = useState(42); // percent
 
+  // Health check
   useEffect(() => {
     setApiStatus("loading");
     fetch(`${API}/health`)
@@ -20,163 +21,147 @@ export default function App() {
       .catch(() => setApiStatus("error"));
   }, []);
 
+  // Compile
   const compile = useCallback(async () => {
-    if (!code.trim() || phase === STATE.COMPILING) return;
-    setPhase(STATE.COMPILING);
+    if (!code.trim() || phase === PHASE.RUNNING) return;
+    setPhase(PHASE.RUNNING);
     setResult(null);
-
     try {
       const res  = await fetch(`${API}/compile`, {
-        method:  "POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ code }),
+        body: JSON.stringify({ code }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Compile failed");
       setResult(data);
     } catch (err) {
       setResult({
-        tokens: [], symbolTable: [], ast: null, cfg: null,
-        firstFollow: null, parsingTable: null,
-        lexerErrors:  [],
-        parserErrors: [{ message: err.message, line: 0, phase: "network" }],
+        tokens:[], symbolTable:[], ast:null, cfg:null,
+        firstFollow:null, parsingTable:null,
+        lexerErrors:[],
+        parserErrors:[{ message:err.message, line:0, phase:"network" }],
       });
     } finally {
-      setPhase(STATE.DONE);
+      setPhase(PHASE.DONE);
     }
   }, [code, phase]);
 
-  const viewResults  = useCallback(() => setPhase(STATE.VIEWING), []);
-  const backToEditor = useCallback(() => setPhase(STATE.DONE),    []);
+  // Drag resize
+  const dragging    = useRef(false);
+  const wrapRef     = useRef(null);
 
-  const dragging     = useRef(false);
-  const workspaceRef = useRef(null);
-
-  const onDividerMouseDown = useCallback(e => {
+  const onDragStart = useCallback(e => {
     e.preventDefault();
     dragging.current = true;
-    document.body.style.cursor     = "col-resize";
+    document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
   }, []);
 
   useEffect(() => {
-    const onMove = e => {
-      if (!dragging.current || !workspaceRef.current) return;
-      const rect = workspaceRef.current.getBoundingClientRect();
+    const move = e => {
+      if (!dragging.current || !wrapRef.current) return;
+      const rect = wrapRef.current.getBoundingClientRect();
       const pct  = ((e.clientX - rect.left) / rect.width) * 100;
-      setEditorWidth(Math.min(70, Math.max(30, pct)));
+      setLeftWidth(Math.min(65, Math.max(25, pct)));
     };
-    const onUp = () => {
+    const up = () => {
       if (!dragging.current) return;
       dragging.current = false;
-      document.body.style.cursor     = "";
+      document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup",   onUp);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup",   onUp);
-    };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+    return () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
   }, []);
 
-  const errorCount = result
+  const errCount = result
     ? (result.lexerErrors?.length ?? 0) + (result.parserErrors?.length ?? 0)
     : 0;
-  const isViewing = phase === STATE.VIEWING;
-  const hasDone   = phase === STATE.DONE || phase === STATE.VIEWING;
 
   const statusLabel = {
-    ok:      "All services online",
-    warn:    "Java unreachable",
-    error:   "Middleware unreachable",
-    loading: "Checking services…",
-    unknown: "",
+    ok:"All services online", warn:"Java unreachable",
+    error:"Middleware down", loading:"Checking…", unknown:"",
   }[apiStatus] ?? "";
 
   return (
     <div className="app">
-      <header className="topbar">
-        <div className="topbar-logo">
-          <div className="logo-icon">⚙</div>
-          <span>Compiler IDE</span>
+
+      {/* ── Header (LeetCode-style) ── */}
+      <header className="header">
+        <div className="header-logo">
+          <div className="header-logo-icon">⚙</div>
+          <span className="header-logo-text">Compiler IDE</span>
         </div>
-        <span className="topbar-sub">A3-5  ·  Python-like Language</span>
-        <div className="topbar-spacer" />
-        <div className="topbar-status">
-          <div className={`status-dot ${
-            apiStatus === "ok"      ? "ok"      :
-            apiStatus === "loading" ? "loading" :
-            apiStatus !== "unknown" ? "error"   : ""
-          }`} />
+        <div className="header-sep" />
+        <span className="header-sub">A3-5 · Python-like Language</span>
+
+        <div className="header-spacer" />
+
+        <div className="header-status">
+          <div className={`hdot ${apiStatus === "ok" ? "ok" : apiStatus === "loading" ? "loading" : apiStatus !== "unknown" ? "error" : ""}`} />
           <span>{statusLabel}</span>
         </div>
+
+        <button
+          className="btn btn-run"
+          onClick={compile}
+          disabled={phase === PHASE.RUNNING || !code.trim()}
+          style={{ marginLeft: 8 }}
+        >
+          {phase === PHASE.RUNNING
+            ? <><span className="bspin" /> Running…</>
+            : <>▶ Run</>
+          }
+        </button>
       </header>
 
-      <div className="workspace" ref={workspaceRef}>
-        <div
-          className="editor-col"
-          style={{ width: isViewing ? `${editorWidth}%` : "100%" }}
-        >
+      {/* ── Workspace ── */}
+      <div className="workspace" ref={wrapRef}>
+
+        {/* ── Left: Results ── */}
+        <div className="left-pane" style={{ width: `${leftWidth}%` }}>
+          <ResultPanel
+            result={result}
+            loading={phase === PHASE.RUNNING}
+            defaultTab={errCount > 0 ? "errors" : "tokens"}
+          />
+        </div>
+
+        <div className="divider" onMouseDown={onDragStart} />
+
+        {/* ── Right: Editor + status ── */}
+        <div className="right-pane">
           <Editor
             code={code}
             onChange={setCode}
             onCompile={compile}
-            loading={phase === STATE.COMPILING}
+            loading={phase === PHASE.RUNNING}
           />
 
-          {hasDone && result && (
-            <div className={`status-bar ${errorCount > 0 ? "status-bar--error" : "status-bar--ok"}`}>
-              <div className="status-bar-left">
-                <span className="status-bar-icon">
-                  {errorCount > 0 ? "✕" : "✓"}
-                </span>
-                <div>
-                  <div className="status-bar-title">
-                    {errorCount > 0
-                      ? `Compilation failed — ${errorCount} error${errorCount > 1 ? "s" : ""} found`
-                      : "Compilation successful — no errors found"}
-                  </div>
-                  <div className="status-bar-sub">
-                    {result.tokens?.length ?? 0} tokens
-                    &nbsp;·&nbsp;
-                    {result.symbolTable?.length ?? 0} symbols
-                    {errorCount > 0 && (
-                      <span className="status-bar-err-hint">
-                        &nbsp;·&nbsp;Check the Errors tab for details
-                      </span>
-                    )}
-                  </div>
+          {/* Status bar — appears after compile */}
+          {phase === PHASE.DONE && result && (
+            <div className={`sbar ${errCount > 0 ? "sbar-err" : "sbar-ok"}`}>
+              <div className="sbar-icon">{errCount > 0 ? "✕" : "✓"}</div>
+              <div className="sbar-body">
+                <div className="sbar-title">
+                  {errCount > 0
+                    ? `Compilation failed — ${errCount} error${errCount > 1 ? "s" : ""} found`
+                    : "Compilation successful — no errors"}
                 </div>
-              </div>
-              <div className="status-bar-right">
-                {isViewing ? (
-                  <button className="btn btn-secondary" onClick={backToEditor}>
-                    ← Back to editor
-                  </button>
-                ) : (
-                  <button className="btn btn-accent" onClick={viewResults}>
-                    View Results →
-                  </button>
-                )}
+                <div className="sbar-sub">
+                  {result.tokens?.length ?? 0} tokens
+                  &nbsp;·&nbsp;
+                  {result.symbolTable?.length ?? 0} symbols
+                  {errCount > 0 && (
+                    <span className="warn">&nbsp;·&nbsp;See Errors tab →</span>
+                  )}
+                </div>
               </div>
             </div>
           )}
         </div>
-
-        {isViewing && (
-          <div className="divider" onMouseDown={onDividerMouseDown} />
-        )}
-
-        {isViewing && (
-          <div className="results-col">
-            <ResultPanel
-              result={result}
-              loading={false}
-              defaultTab={errorCount > 0 ? "errors" : "tokens"}
-            />
-          </div>
-        )}
       </div>
     </div>
   );

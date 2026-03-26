@@ -3,7 +3,6 @@ package com.compiler;
 import java.util.ArrayList;
 import java.util.List;
 
-// import com.compiler.AST.*;
 import com.compiler.AST.AssignStmtNode;
 import com.compiler.AST.BinOpNode;
 import com.compiler.AST.ForStmtNode;
@@ -12,14 +11,11 @@ import com.compiler.AST.ListLitNode;
 import com.compiler.AST.LiteralNode;
 import com.compiler.AST.PrintStmtNode;
 import com.compiler.AST.ProgramNode;
-// import com.compiler.CFG.*;
 import com.compiler.CFG.CFGEdge;
 import com.compiler.CFG.CFGGraph;
 import com.compiler.CFG.CFGNode;
-// import com.compiler.Lexer.*;
 import com.compiler.Lexer.LexerError;
 import com.compiler.Lexer.Token;
-// import com.compiler.Parser.*;
 import com.compiler.Parser.FirstFollowComputer;
 import com.compiler.Parser.FirstFollowResult;
 import com.compiler.Parser.ParserError;
@@ -236,47 +232,27 @@ public class Main {
     //  main()  —  change source to any SAMPLE_* string to test
     // ══════════════════════════════════════════════════════════════════════
     public static void main(String[] args) {
-        String source = SAMPLE_ALL_FEATURES;
-        System.out.println("Source:\n" + "─".repeat(50) + "\n" + source + "─".repeat(50));
+        String source;
+
+        // Determine file path: use CLI arg or fall back to default
+        String filePath = (args.length > 0) ? args[0] : "C:\\Users\\ayush\\Desktop\\Projects\\python-visual-parser\\test.py";
+
+        try {
+            source = java.nio.file.Files.readString(java.nio.file.Path.of(filePath));
+        } catch (java.io.FileNotFoundException | java.nio.file.NoSuchFileException e) {
+            System.err.println("Error: File not found — " + filePath);
+            System.exit(1);
+            return;
+        } catch (java.io.IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+            System.exit(1);
+            return;
+        }
+
+        System.out.println("Source: " + filePath);
+        System.out.println("─".repeat(50));
+        System.out.println(source);
+        System.out.println("─".repeat(50));
         Display.show(Pipeline.compile(source));
     }
-
-    // ─── Sample programs ───────────────────────────────────────────────────
-    static final String SAMPLE_BASIC = """
-            x = 5
-            y = 3.14
-            z = x + 2
-            print(z)
-            """;
-
-    static final String SAMPLE_FOR_LOOP = """
-            items = [1, 2, 3]
-            for i in items:
-                print(i)
-            """;
-
-    static final String SAMPLE_AUGMENTED = """
-            count = 0
-            count += 1
-            count -= 1
-            print(count)
-            """;
-
-    static final String SAMPLE_ALL_FEATURES = """
-            x = 42
-            name = "hello"
-            result = x + 10
-            items = [1, 2, 3]
-            total = 0
-            for i in items:
-                total += 1
-                print(i)
-            print(total)
-            print(result)
-            """;
-
-    static final String SAMPLE_SEMANTIC_ERROR = """
-            x = 5
-            print(y)
-            """;
 }
