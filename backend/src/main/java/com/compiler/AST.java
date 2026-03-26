@@ -2,35 +2,10 @@ package com.compiler;
 
 import java.util.List;
 
-/**
- * AST.java — all Abstract Syntax Tree node types in one place.
- *
- * Hierarchy:
- *   Node (abstract)
- *     ├── StmtNode (abstract)
- *     │     ├── ProgramNode
- *     │     ├── AssignStmtNode
- *     │     ├── PrintStmtNode
- *     │     └── ForStmtNode
- *     └── ExprNode (abstract)
- *           ├── BinOpNode
- *           ├── IdentNode
- *           ├── LiteralNode
- *           └── ListLitNode
- *
- * Also contains:
- *   AssignOp  — enum: ASSIGN | PLUS_ASSIGN | MINUS_ASSIGN
- *
- * All classes are public static nested inside AST for clean namespacing.
- * Every node carries a nodeType String so Jackson can include a type
- * discriminator in JSON output.
- */
 public class AST {
 
-    // ─── AssignOp ──────────────────────────────────────────────────────────
     public enum AssignOp { ASSIGN, PLUS_ASSIGN, MINUS_ASSIGN }
 
-    // ─── Base nodes ────────────────────────────────────────────────────────
     public abstract static class Node {
         public final String nodeType;
         protected Node(String nodeType) { this.nodeType = nodeType; }
@@ -43,8 +18,6 @@ public class AST {
     public abstract static class ExprNode extends Node {
         protected ExprNode(String t) { super(t); }
     }
-
-    // ─── Statement nodes ───────────────────────────────────────────────────
 
     public static class ProgramNode extends Node {
         public final List<StmtNode> statements;
@@ -85,8 +58,6 @@ public class AST {
             this.body = List.copyOf(body); this.line = line;
         }
     }
-
-    // ─── Expression nodes ──────────────────────────────────────────────────
 
     public static class BinOpNode extends ExprNode {
         public final String   op;
@@ -129,7 +100,7 @@ public class AST {
         public final int      line;
 
         public IndexNode(ExprNode base, ExprNode index, int line) {
-            super("Index");  // ✅ FIX: pass nodeType string
+            super("Index");
             this.base = base;
             this.index = index;
             this.line = line;

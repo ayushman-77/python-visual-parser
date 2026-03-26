@@ -22,22 +22,8 @@ import com.compiler.Parser.ParserError;
 import com.compiler.Parser.ParsingTable;
 import com.compiler.SymbolTable.SymbolEntry;
 
-/**
- * Main.java — entry point + pipeline orchestration + CLI display.
- *
- * Contains:
- *   CompilerResult — unified output object (becomes JSON for Spring Boot later)
- *   Pipeline       — runs all phases in order, returns a CompilerResult
- *   Display        — the ONLY place System.out is called; reads from CompilerResult
- *
- * To run:  mvn compile exec:java -Dexec.mainClass=com.compiler.Main
- * Change the 'source' variable in main() to try different sample programs.
- */
 public class Main {
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  CompilerResult  —  unified output, one object for all phases
-    // ══════════════════════════════════════════════════════════════════════
     public static class CompilerResult {
         public List<Token>          tokens;
         public List<SymbolEntry>    symbolTable;
@@ -52,12 +38,8 @@ public class Main {
         public boolean isComplete() { return cfg != null; }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  Pipeline  —  runs Lexer → FirstFollow → ParsingTable → Parser → CFG
-    // ══════════════════════════════════════════════════════════════════════
     public static class Pipeline {
 
-        // Grammar-level data computed once at class load, reused for every compile()
         private static final FirstFollowResult FF_RESULT;
         private static final ParsingTable      PARSE_TABLE;
         static {
@@ -67,32 +49,24 @@ public class Main {
 
         public static CompilerResult compile(String source) {
             CompilerResult out = new CompilerResult();
-
-            // Phase 1: Lexer
             Lexer.Result lr   = new Lexer(source).tokenize();
             out.tokens        = lr.tokens;
             out.lexerErrors   = lr.errors;
 
-            // Grammar tables (always attached — useful for display/API)
             out.firstFollow   = FF_RESULT;
             out.parsingTable  = PARSE_TABLE;
 
-            // Phase 2: Parser (runs even if lexer had errors — partial recovery)
             Parser.ParserResult pr = new Parser(lr.tokens).parse();
             out.ast           = pr.ast;
             out.symbolTable   = pr.symbolTable;
             out.parserErrors  = pr.errors;
 
-            // Phase 3: CFG (only if AST was produced)
             if (pr.ast != null) out.cfg = CFG.Builder.build(pr.ast);
 
             return out;
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  Display  —  the ONLY class that calls System.out.println
-    // ══════════════════════════════════════════════════════════════════════
     private static class Display {
         private static final String R = "\u001B[0m", BOLD = "\u001B[1m";
         private static final String CY = "\u001B[36m", YL = "\u001B[33m";
@@ -228,13 +202,9 @@ public class Main {
         static void sep(int w) { System.out.println(DM + "─".repeat(w) + R); }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  main()  —  change source to any SAMPLE_* string to test
-    // ══════════════════════════════════════════════════════════════════════
     public static void main(String[] args) {
         String source;
 
-        // Determine file path: use CLI arg or fall back to default
         String filePath = (args.length > 0) ? args[0] : "C:\\Users\\ayush\\Desktop\\Projects\\python-visual-parser\\test.py";
 
         try {

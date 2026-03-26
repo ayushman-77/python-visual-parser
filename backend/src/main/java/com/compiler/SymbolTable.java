@@ -6,24 +6,11 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-/**
- * SymbolTable.java — everything related to tracking declared variables.
- *
- * Contains:
- *   VarType      — enum: INT | FLOAT | STR | BOOL | LIST | UNKNOWN
- *   SymbolEntry  — one row: name, type, scopeLevel, declarationLine
- *   SymbolTable  — scope-stack implementation
- *
- * Input  : declare / lookup / enterScope / exitScope calls from the Parser
- * Output : snapshot() → List<SymbolEntry>  (for JSON / display)
- */
 public class SymbolTable {
 
-    // ─── VarType ───────────────────────────────────────────────────────────
     public enum VarType {
         INT, FLOAT, STR, BOOL, LIST, UNKNOWN;
 
-        /** Infer VarType directly from a Lexer token type. */
         public static VarType from(Lexer.TokenType tt) {
             return switch (tt) {
                 case INT_LIT    -> INT;
@@ -35,10 +22,9 @@ public class SymbolTable {
         }
     }
 
-    // ─── SymbolEntry ───────────────────────────────────────────────────────
     public static class SymbolEntry {
         public final String  name;
-        public VarType       type;             // mutable — can change on reassignment
+        public VarType       type;
         public final int     scopeLevel;
         public final int     declarationLine;
 
@@ -50,8 +36,6 @@ public class SymbolTable {
         public void updateType(VarType t) { this.type = t; }
     }
 
-    // ─── SymbolTable logic ─────────────────────────────────────────────────
-    /** Stack of scopes. Index 0 = global (bottom). Peek = current innermost. */
     private final Deque<LinkedHashMap<String, SymbolEntry>> scopes = new ArrayDeque<>();
     private int level = 0;
     private final List<SymbolEntry> allEntries = new ArrayList<>();
@@ -80,6 +64,5 @@ public class SymbolTable {
 
     public boolean isDeclared(String name) { return lookup(name) != null; }
 
-    /** Immutable flat snapshot of all entries in declaration order. */
     public List<SymbolEntry> snapshot() { return List.copyOf(allEntries); }
 }

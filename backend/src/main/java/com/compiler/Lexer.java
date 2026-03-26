@@ -8,22 +8,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Lexer.java — everything related to scanning source code into tokens.
- *
- * Contains (as nested types):
- *   TokenType   — enum of all token categories
- *   Token       — (type, value, line) triple
- *   LexerError  — (message, line) error record
- *   Result      — output wrapper: List<Token> + List<LexerError>
- *
- * Only Lexer itself has logic.
- * Input:  String (raw source)
- * Output: Lexer.Result
- */
 public class Lexer {
 
-    // ─── TokenType ─────────────────────────────────────────────────────────
     public enum TokenType {
         INT_LIT, FLOAT_LIT, STRING_LIT, BOOL_LIT,
         IDENT,
@@ -36,7 +22,6 @@ public class Lexer {
         EOF, UNKNOWN
     }
 
-    // ─── Token ─────────────────────────────────────────────────────────────
     public static class Token {
         public final TokenType type;
         public final String    value;
@@ -51,14 +36,12 @@ public class Lexer {
         }
     }
 
-    // ─── LexerError ────────────────────────────────────────────────────────
     public static class LexerError {
         public final String message;
         public final int    line;
         public LexerError(String message, int line) { this.message = message; this.line = line; }
     }
 
-    // ─── Result ────────────────────────────────────────────────────────────
     public static class Result {
         public final List<Token>      tokens;
         public final List<LexerError> errors;
@@ -68,9 +51,6 @@ public class Lexer {
         public boolean hasErrors() { return !errors.isEmpty(); }
     }
 
-    // ─── Lexer internals ───────────────────────────────────────────────────
-
-    /** Pair of (TokenType, compiled regex). Ordered list — first match wins. */
     private record TokenRule(TokenType type, Pattern pattern) {}
 
     private static final List<TokenRule> RULES = List.of(
@@ -107,8 +87,6 @@ public class Lexer {
 
     public Lexer(String source) { this.source = source; }
 
-    // ─── Public API ────────────────────────────────────────────────────────
-
     public Result tokenize() {
         String[] lines = source.split("\n", -1);
         Deque<Integer> indentStack = new ArrayDeque<>();
@@ -135,8 +113,7 @@ public class Lexer {
                 if (indentStack.peek() != indent)
                     errors.add(new LexerError("Indentation mismatch at level " + indent, ln));
             }
-
-            // Strip inline comment
+            
             int hash = trimmed.indexOf('#');
             String content = hash >= 0 ? trimmed.substring(0, hash).stripTrailing() : trimmed;
 

@@ -6,11 +6,10 @@ const router  = express.Router();
 
 const JAVA_API = process.env.JAVA_API_URL || 'http://localhost:7070';
 
-// Store files in memory (no disk writes needed)
 const storage = multer.memoryStorage();
 const upload  = multer({
   storage,
-  limits: { fileSize: 1 * 1024 * 1024 }, // 1 MB max
+  limits: { fileSize: 1 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     if (ext === '.java' || ext === '.txt') {
@@ -21,11 +20,6 @@ const upload  = multer({
   },
 });
 
-/**
- * POST /api/upload
- * Multipart form-data with field "file" containing a .java file.
- * Reads the file content and compiles it via the Java backend.
- */
 router.post('/', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded. Use field name "file".' });

@@ -6,28 +6,8 @@ import com.compiler.SymbolTable.VarType;
 
 import java.util.*;
 
-/**
- * Parser.java — the entire LL(1) parsing pipeline in one file.
- *
- * Contains (as nested types, in dependency order):
- *   Production          — one grammar rule  (lhs → rhs)
- *   Grammar             — all 33 productions + non-terminal list + helpers
- *   FirstFollowResult   — output of FIRST/FOLLOW computation
- *   FirstFollowComputer — fixed-point algorithm for FIRST and FOLLOW sets
- *   ParsingTable        — LL(1) M[NonTerminal][Terminal] → Production
- *   ParserError         — (message, line, phase) error record
- *   ParserResult        — (ProgramNode ast, symbolTable, errors) output wrapper
- *
- * Parser itself:
- *   Input  : List<Token>  (from Lexer)
- *   Output : ParserResult
- *   Also builds and populates a SymbolTable inline during parsing.
- */
 public class Parser {
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  Production
-    // ══════════════════════════════════════════════════════════════════════
     public static class Production {
         public final int          index;
         public final String       lhs;
@@ -44,9 +24,6 @@ public class Parser {
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  Grammar  —  LL(1) grammar after left-recursion removal & left-factoring
-    // ══════════════════════════════════════════════════════════════════════
     public static class Grammar {
         public static final String EPSILON = "ε";
         public static final String EOF     = "$";
@@ -61,15 +38,6 @@ public class Parser {
             "term","term_prime",
             "factor","factor_tail","literal","list_lit","list_contents"
         );
-
-        // Original left-recursive rules (for reference):
-        //   expr → expr PLUS term | expr MINUS term | term
-        //   term → term STAR factor | term SLASH factor | factor
-        // After removal:
-        //   expr  → term expr_prime
-        //   expr' → PLUS term expr_prime | MINUS term expr_prime | ε
-        //   term  → factor term_prime
-        //   term' → STAR factor term_prime | SLASH factor term_prime | ε
 
         public static final List<Production> ALL = List.of(
             new Production(0,  "program",        List.of("stmt_list")),
@@ -113,9 +81,6 @@ public class Parser {
         public static boolean isNonTerminal(String s) { return NON_TERMINALS.contains(s); }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  FirstFollowResult
-    // ══════════════════════════════════════════════════════════════════════
     public static class FirstFollowResult {
         public final Map<String, Set<String>> first;
         public final Map<String, Set<String>> follow;
@@ -124,9 +89,6 @@ public class Parser {
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  FirstFollowComputer  — fixed-point iteration
-    // ══════════════════════════════════════════════════════════════════════
     public static class FirstFollowComputer {
 
         public static FirstFollowResult compute() {
@@ -194,9 +156,6 @@ public class Parser {
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  ParsingTable
-    // ══════════════════════════════════════════════════════════════════════
     public static class ParsingTable {
         public final Map<String, Map<String, Production>> table;
         public final List<String> conflicts;
@@ -243,9 +202,6 @@ public class Parser {
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  ParserError
-    // ══════════════════════════════════════════════════════════════════════
     public static class ParserError {
         public final String message;
         public final int    line;
@@ -255,9 +211,6 @@ public class Parser {
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  ParserResult
-    // ══════════════════════════════════════════════════════════════════════
     public static class ParserResult {
         public final ProgramNode                    ast;
         public final List<SymbolTable.SymbolEntry>  symbolTable;
@@ -267,10 +220,7 @@ public class Parser {
         }
         public boolean hasErrors() { return !errors.isEmpty(); }
     }
-
-    // ══════════════════════════════════════════════════════════════════════
-    //  Parser  —  recursive descent, builds AST, populates SymbolTable inline
-    // ══════════════════════════════════════════════════════════════════════
+    
     private final List<Token>       tokens;
     private       int               pos = 0;
     private final SymbolTable       sym  = new SymbolTable();
@@ -285,7 +235,6 @@ public class Parser {
         return new ParserResult(root, sym.snapshot(), errs);
     }
 
-    // ─── Utilities ────────────────────────────────────────────────────────
     private Token peek()          { return tokens.get(Math.min(pos, tokens.size() - 1)); }
     private Token consume()       { Token t = peek(); if (pos < tokens.size() - 1) pos++; return t; }
     private boolean at(TokenType t) { return peek().type == t; }
@@ -301,8 +250,7 @@ public class Parser {
         while (peek().type != TokenType.NEWLINE && peek().type != TokenType.EOF) consume();
         if (at(TokenType.NEWLINE)) consume();
     }
-
-    // ─── Grammar rules ────────────────────────────────────────────────────
+    
     private ProgramNode parseProgram() {
         List<StmtNode> stmts = parseStmtList();
         expect(TokenType.EOF);
@@ -409,15 +357,14 @@ public class Parser {
 
                 ExprNode base = new IdentNode(t.value, t.line);
 
-                // Handle indexing: items[expr]
                 if (at(TokenType.LBRACKET)) {
-                    consume(); // [
+                    consume();
 
                     ExprNode index = parseExpr();
 
                     expect(TokenType.RBRACKET);
 
-                    base = new IndexNode(base, index, t.line); // NEW AST NODE
+                    base = new IndexNode(base, index, t.line);
                 }
 
                 yield base;
@@ -436,7 +383,6 @@ public class Parser {
         };
     }
 
-    // ─── Type inference ───────────────────────────────────────────────────
     private VarType inferType(ExprNode e) {
         if (e instanceof LiteralNode l)  return l.varType;
         if (e instanceof ListLitNode)    return VarType.LIST;

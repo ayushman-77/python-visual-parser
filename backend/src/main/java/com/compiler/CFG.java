@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 
-// import com.compiler.AST.*;
 import com.compiler.AST.AssignStmtNode;
 import com.compiler.AST.BinOpNode;
 import com.compiler.AST.ExprNode;
@@ -16,21 +15,8 @@ import com.compiler.AST.PrintStmtNode;
 import com.compiler.AST.ProgramNode;
 import com.compiler.AST.StmtNode;
 
-/**
- * CFG.java — everything related to the Control Flow Graph.
- *
- * Contains:
- *   CFGNode   — one basic block (ENTRY | EXIT | BLOCK | FOR_CONDITION)
- *   CFGEdge   — directed edge between two nodes with optional label
- *   CFGGraph  — the complete graph: List<CFGNode> + List<CFGEdge>
- *   Builder   — builds a CFGGraph from a ProgramNode AST
- *
- * Input  : ProgramNode  (root of AST)
- * Output : CFGGraph
- */
 public class CFG {
 
-    // ─── CFGNode ───────────────────────────────────────────────────────────
     public enum NodeKind { ENTRY, EXIT, BLOCK, FOR_CONDITION }
 
     public static class CFGNode {
@@ -48,8 +34,6 @@ public class CFG {
             return new CFGNode(id, kind, List.of(), 0);
         }
     }
-
-    // ─── CFGEdge ───────────────────────────────────────────────────────────
     public static class CFGEdge {
         public final int    from, to;
         public final String label;
@@ -57,7 +41,6 @@ public class CFG {
         public CFGEdge(int from, int to)               { this(from, to, ""); }
     }
 
-    // ─── CFGGraph ──────────────────────────────────────────────────────────
     public static class CFGGraph {
         public final List<CFGNode> nodes;
         public final List<CFGEdge> edges;
@@ -66,13 +49,11 @@ public class CFG {
         }
     }
 
-    // ─── Builder ───────────────────────────────────────────────────────────
     public static class Builder {
         private final List<CFGNode> nodes = new ArrayList<>();
         private final List<CFGEdge> edges = new ArrayList<>();
         private int id = 0;
 
-        /** Single static entry point. */
         public static CFGGraph build(ProgramNode program) {
             return new Builder().run(program);
         }

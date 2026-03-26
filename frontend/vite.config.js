@@ -6,7 +6,6 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // All /api calls from React dev server → Node middleware
       "/api": {
         target: "http://localhost:3001",
         changeOrigin: true,

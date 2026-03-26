@@ -4,11 +4,6 @@ const router  = express.Router();
 
 const JAVA_API = process.env.JAVA_API_URL || 'http://localhost:7070';
 
-/**
- * POST /api/compile
- * Body: { code: string }
- * Forwards the code to the Java backend and returns the compilation result.
- */
 router.post('/', async (req, res) => {
   const { code } = req.body;
 
@@ -24,7 +19,6 @@ router.post('/', async (req, res) => {
     return res.json(data);
   } catch (err) {
     if (err.response) {
-      // Java API returned an error
       return res.status(err.response.status).json(err.response.data);
     }
     if (err.code === 'ECONNREFUSED') {

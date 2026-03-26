@@ -10,9 +10,8 @@ export default function App() {
   const [result,    setResult]    = useState(null);
   const [phase,     setPhase]     = useState(PHASE.IDLE);
   const [apiStatus, setApiStatus] = useState("unknown");
-  const [leftWidth, setLeftWidth] = useState(42); // percent
+  const [leftWidth, setLeftWidth] = useState(42);
 
-  // Health check
   useEffect(() => {
     setApiStatus("loading");
     fetch(`${API}/health`)
@@ -21,7 +20,6 @@ export default function App() {
       .catch(() => setApiStatus("error"));
   }, []);
 
-  // Compile
   const compile = useCallback(async () => {
     if (!code.trim() || phase === PHASE.RUNNING) return;
     setPhase(PHASE.RUNNING);
@@ -47,7 +45,6 @@ export default function App() {
     }
   }, [code, phase]);
 
-  // Drag resize
   const dragging    = useRef(false);
   const wrapRef     = useRef(null);
 
@@ -88,7 +85,7 @@ export default function App() {
   return (
     <div className="app">
 
-      {/* ── Header (LeetCode-style) ── */}
+      {}
       <header className="header">
         <div className="header-logo">
           <div className="header-logo-icon">⚙</div>
@@ -117,10 +114,10 @@ export default function App() {
         </button>
       </header>
 
-      {/* ── Workspace ── */}
+      {}
       <div className="workspace" ref={wrapRef}>
 
-        {/* ── Left: Results ── */}
+        {}
         <div className="left-pane" style={{ width: `${leftWidth}%` }}>
           <ResultPanel
             result={result}
@@ -131,7 +128,7 @@ export default function App() {
 
         <div className="divider" onMouseDown={onDragStart} />
 
-        {/* ── Right: Editor + status ── */}
+        {}
         <div className="right-pane">
           <Editor
             code={code}
@@ -140,7 +137,7 @@ export default function App() {
             loading={phase === PHASE.RUNNING}
           />
 
-          {/* Status bar — appears after compile */}
+          {}
           {phase === PHASE.DONE && result && (
             <div className={`sbar ${errCount > 0 ? "sbar-err" : "sbar-ok"}`}>
               <div className="sbar-icon">{errCount > 0 ? "✕" : "✓"}</div>

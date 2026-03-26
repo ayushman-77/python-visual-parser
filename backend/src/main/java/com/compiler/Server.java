@@ -11,9 +11,6 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class Server {
 
-    // private static final Parser.FirstFollowResult FF_RESULT   = Parser.FirstFollowComputer.compute();
-    // private static final Parser.ParsingTable      PARSE_TABLE = new Parser.ParsingTable(FF_RESULT);
-
     public static void main(String[] args) {
         System.setProperty("server.port", "7070");
         SpringApplication.run(Server.class, args);
