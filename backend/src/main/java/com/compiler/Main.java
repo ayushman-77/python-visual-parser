@@ -3,7 +3,7 @@ package com.compiler;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.compiler.AST.*;
+// import com.compiler.AST.*;
 import com.compiler.AST.AssignStmtNode;
 import com.compiler.AST.BinOpNode;
 import com.compiler.AST.ForStmtNode;
@@ -12,14 +12,14 @@ import com.compiler.AST.ListLitNode;
 import com.compiler.AST.LiteralNode;
 import com.compiler.AST.PrintStmtNode;
 import com.compiler.AST.ProgramNode;
-import com.compiler.CFG.*;
+// import com.compiler.CFG.*;
 import com.compiler.CFG.CFGEdge;
 import com.compiler.CFG.CFGGraph;
 import com.compiler.CFG.CFGNode;
-import com.compiler.Lexer.*;
+// import com.compiler.Lexer.*;
 import com.compiler.Lexer.LexerError;
 import com.compiler.Lexer.Token;
-import com.compiler.Parser.*;
+// import com.compiler.Parser.*;
 import com.compiler.Parser.FirstFollowComputer;
 import com.compiler.Parser.FirstFollowResult;
 import com.compiler.Parser.ParserError;
@@ -65,7 +65,7 @@ public class Main {
         private static final FirstFollowResult FF_RESULT;
         private static final ParsingTable      PARSE_TABLE;
         static {
-            FF_RESULT   = new FirstFollowComputer().compute();
+            FF_RESULT   = FirstFollowComputer.compute();
             PARSE_TABLE = new ParsingTable(FF_RESULT);
         }
 

@@ -16,6 +16,12 @@ node_modules/
 dist/
 build/
 
+# Java / Maven
+target/
+*.class
+*.log
+.mvn/
+
 # OS
 .DS_Store
 Thumbs.db
