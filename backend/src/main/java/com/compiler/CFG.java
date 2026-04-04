@@ -17,7 +17,7 @@ import com.compiler.AST.StmtNode;
 
 public class CFG {
 
-    public enum NodeKind { ENTRY, EXIT, BLOCK, FOR_CONDITION }
+    public enum NodeKind { ENTRY, EXIT, BLOCK, FOR_CONDITION, IF_CONDITION, WHILE_CONDITION }
 
     public static class CFGNode {
         public final int          id;
@@ -82,23 +82,31 @@ public class CFG {
 
             for (StmtNode stmt : stmts) {
                 if (stmt instanceof ForStmtNode f) {
-                    if (!block.isEmpty()) {
-                        CFGNode n = add(new CFGNode(next(), NodeKind.BLOCK, block, bLine));
-                        edges.add(new CFGEdge(prev, n.id));
-                        prev = n.id;
-                        block = new ArrayList<>();
-                    }
+                    prev = flushBlock(block, bLine, prev);
                     prev = buildFor(f, prev);
+                    block.clear();
+                } else if (stmt instanceof AST.WhileStmtNode w) {
+                    prev = flushBlock(block, bLine, prev);
+                    prev = buildWhile(w, prev);
+                    block.clear();
+                } else if (stmt instanceof AST.IfStmtNode i) {
+                    prev = flushBlock(block, bLine, prev);
+                    prev = buildIf(i, prev);
+                    block.clear();
                 } else {
                     if (block.isEmpty()) bLine = lineOf(stmt);
                     block.add(str(stmt));
                 }
             }
 
+            return flushBlock(block, bLine, prev);
+        }
+
+        private int flushBlock(List<String> block, int bLine, int prev) {
             if (!block.isEmpty()) {
-                CFGNode n = add(new CFGNode(next(), NodeKind.BLOCK, block, bLine));
+                CFGNode n = add(new CFGNode(next(), NodeKind.BLOCK, new ArrayList<>(block), bLine));
                 edges.add(new CFGEdge(prev, n.id));
-                prev = n.id;
+                return n.id;
             }
             return prev;
         }
@@ -107,9 +115,77 @@ public class CFG {
             CFGNode cond = add(new CFGNode(next(), NodeKind.FOR_CONDITION,
                 List.of("for " + f.loopVar + " in " + exprStr(f.iterable)), f.line));
             edges.add(new CFGEdge(prev, cond.id));
-            int bodyEnd = buildList(f.body, cond.id);
+            
+            CFGNode yesProxy = add(new CFGNode(next(), NodeKind.BLOCK, List.of(), f.line));
+            edges.add(new CFGEdge(cond.id, yesProxy.id, "yes"));
+            
+            int bodyEnd = buildList(f.body, yesProxy.id);
             edges.add(new CFGEdge(bodyEnd, cond.id, "loop"));
-            return cond.id;
+            
+            CFGNode noProxy = add(new CFGNode(next(), NodeKind.BLOCK, List.of(), f.line));
+            edges.add(new CFGEdge(cond.id, noProxy.id, "no"));
+            
+            return noProxy.id;
+        }
+
+        private int buildWhile(AST.WhileStmtNode w, int prev) {
+            CFGNode cond = add(new CFGNode(next(), NodeKind.WHILE_CONDITION,
+                List.of("while " + exprStr(w.condition)), w.line));
+            edges.add(new CFGEdge(prev, cond.id));
+            
+            CFGNode yesProxy = add(new CFGNode(next(), NodeKind.BLOCK, List.of(), w.line));
+            edges.add(new CFGEdge(cond.id, yesProxy.id, "yes"));
+            
+            int bodyEnd = buildList(w.body, yesProxy.id);
+            edges.add(new CFGEdge(bodyEnd, cond.id, "loop"));
+            
+            CFGNode noProxy = add(new CFGNode(next(), NodeKind.BLOCK, List.of(), w.line));
+            edges.add(new CFGEdge(cond.id, noProxy.id, "no"));
+            
+            return noProxy.id;
+        }
+
+        private int buildIf(AST.IfStmtNode i, int prev) {
+            CFGNode cond = add(new CFGNode(next(), NodeKind.IF_CONDITION,
+                List.of("if " + exprStr(i.condition)), i.line));
+            edges.add(new CFGEdge(prev, cond.id));
+            
+            List<Integer> endpoints = new ArrayList<>();
+            
+            CFGNode yesProxy = add(new CFGNode(next(), NodeKind.BLOCK, List.of(), i.line));
+            edges.add(new CFGEdge(cond.id, yesProxy.id, "yes"));
+            endpoints.add(buildList(i.body, yesProxy.id));
+            
+            int currCond = cond.id;
+            for (AST.ElifStmtNode elif : i.elifs) {
+                CFGNode noProxy = add(new CFGNode(next(), NodeKind.BLOCK, List.of(), elif.line));
+                edges.add(new CFGEdge(currCond, noProxy.id, "no"));
+                
+                CFGNode elifCond = add(new CFGNode(next(), NodeKind.IF_CONDITION,
+                    List.of("elif " + exprStr(elif.condition)), elif.line));
+                edges.add(new CFGEdge(noProxy.id, elifCond.id));
+                
+                CFGNode yesProxyElif = add(new CFGNode(next(), NodeKind.BLOCK, List.of(), elif.line));
+                edges.add(new CFGEdge(elifCond.id, yesProxyElif.id, "yes"));
+                endpoints.add(buildList(elif.body, yesProxyElif.id));
+                
+                currCond = elifCond.id;
+            }
+            
+            CFGNode finalNoProxy = add(new CFGNode(next(), NodeKind.BLOCK, List.of(), i.line));
+            edges.add(new CFGEdge(currCond, finalNoProxy.id, "no"));
+            
+            if (i.elseStmt != null) {
+                endpoints.add(buildList(i.elseStmt.body, finalNoProxy.id));
+            } else {
+                endpoints.add(finalNoProxy.id);
+            }
+            
+            CFGNode merge = add(new CFGNode(next(), NodeKind.BLOCK, List.of(), i.line));
+            for (int ep : endpoints) {
+                edges.add(new CFGEdge(ep, merge.id));
+            }
+            return merge.id;
         }
 
         private CFGNode add(CFGNode n) { 
@@ -127,6 +203,8 @@ public class CFG {
                  return p.line;
             if (s instanceof ForStmtNode f) 
                 return f.line;
+            if (s instanceof AST.ExprStmtNode e)
+                return e.line;
             return 0;
         }
 
@@ -138,6 +216,8 @@ public class CFG {
                 p.args.forEach(e -> sj.add(exprStr(e)));
                 return "print(" + sj + ")";
             }
+            if (s instanceof AST.ExprStmtNode e)
+                return exprStr(e.expr);
             return s.nodeType;
         }
 

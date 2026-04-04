@@ -13,8 +13,10 @@ public class Lexer {
     public enum TokenType {
         INT_LIT, FLOAT_LIT, STRING_LIT, BOOL_LIT,
         IDENT,
-        FOR, IN, PRINT,
-        PLUS, MINUS, STAR, SLASH,
+        WHILE, FOR, IN, RANGE, PRINT,
+        PLUS, MINUS, STAR, SLASH, MOD,
+        EQ, NEQ, LT, LE, GT, GE,
+        IF, ELIF, ELSE,
         ASSIGN, PLUS_ASSIGN, MINUS_ASSIGN,
         LPAREN, RPAREN, LBRACKET, RBRACKET,
         COMMA, COLON,
@@ -68,11 +70,18 @@ public class Lexer {
         new TokenRule(TokenType.STRING_LIT,   Pattern.compile("\"[^\"]*\"|'[^']*'")),
         new TokenRule(TokenType.PLUS_ASSIGN,  Pattern.compile("\\+=")),
         new TokenRule(TokenType.MINUS_ASSIGN, Pattern.compile("-=")),
+        new TokenRule(TokenType.EQ,           Pattern.compile("==")),
+        new TokenRule(TokenType.NEQ,          Pattern.compile("!=")),
+        new TokenRule(TokenType.LE,           Pattern.compile("<=")),
+        new TokenRule(TokenType.GE,           Pattern.compile(">=")),
         new TokenRule(TokenType.ASSIGN,       Pattern.compile("=")),
         new TokenRule(TokenType.PLUS,         Pattern.compile("\\+")),
         new TokenRule(TokenType.MINUS,        Pattern.compile("-")),
         new TokenRule(TokenType.STAR,         Pattern.compile("\\*")),
         new TokenRule(TokenType.SLASH,        Pattern.compile("/")),
+        new TokenRule(TokenType.MOD,          Pattern.compile("%")),
+        new TokenRule(TokenType.LT,           Pattern.compile("<")),
+        new TokenRule(TokenType.GT,           Pattern.compile(">")),
         new TokenRule(TokenType.LPAREN,       Pattern.compile("\\(")),
         new TokenRule(TokenType.RPAREN,       Pattern.compile("\\)")),
         new TokenRule(TokenType.LBRACKET,     Pattern.compile("\\[")),
@@ -83,11 +92,16 @@ public class Lexer {
     );
 
     private static final Map<String, TokenType> KEYWORDS = Map.of(
+        "while", TokenType.WHILE,
         "for",   TokenType.FOR,
         "in",    TokenType.IN,
+        "range", TokenType.RANGE,
         "print", TokenType.PRINT,
         "True",  TokenType.BOOL_LIT,
-        "False", TokenType.BOOL_LIT
+        "False", TokenType.BOOL_LIT,
+        "if",    TokenType.IF,
+        "elif",  TokenType.ELIF,
+        "else",  TokenType.ELSE
     );
 
     private final String           source;

@@ -47,6 +47,16 @@ public class AST {
         }
     }
 
+    public static class ExprStmtNode extends StmtNode {
+        public final ExprNode expr;
+        public final int      line;
+        public ExprStmtNode(ExprNode expr, int line) {
+            super("ExprStmt");
+            this.expr = expr;
+            this.line = line;
+        }
+    }
+
     public static class PrintStmtNode extends StmtNode {
         public final List<ExprNode> args;
         public final int            line;
@@ -67,6 +77,66 @@ public class AST {
             this.loopVar = loopVar; 
             this.iterable = iterable;
             this.body = List.copyOf(body); 
+            this.line = line;
+        }
+    }
+
+    public static class WhileStmtNode extends StmtNode {
+        public final ExprNode       condition;
+        public final List<StmtNode> body;
+        public final int            line;
+        public WhileStmtNode(ExprNode condition, List<StmtNode> body, int line) {
+            super("WhileStmt");
+            this.condition = condition;
+            this.body = List.copyOf(body); 
+            this.line = line;
+        }
+    }
+
+    public static class IfStmtNode extends StmtNode {
+        public final ExprNode           condition;
+        public final List<StmtNode>     body;
+        public final List<ElifStmtNode> elifs;
+        public final ElseStmtNode       elseStmt;
+        public final int                line;
+        public IfStmtNode(ExprNode condition, List<StmtNode> body, List<ElifStmtNode> elifs, ElseStmtNode elseStmt, int line) {
+            super("IfStmt");
+            this.condition = condition;
+            this.body = List.copyOf(body); 
+            this.elifs = elifs != null ? List.copyOf(elifs) : List.of();
+            this.elseStmt = elseStmt;
+            this.line = line;
+        }
+    }
+
+    public static class ElifStmtNode extends StmtNode {
+        public final ExprNode       condition;
+        public final List<StmtNode> body;
+        public final int            line;
+        public ElifStmtNode(ExprNode condition, List<StmtNode> body, int line) {
+            super("ElifStmt");
+            this.condition = condition;
+            this.body = List.copyOf(body); 
+            this.line = line;
+        }
+    }
+
+    public static class ElseStmtNode extends StmtNode {
+        public final List<StmtNode> body;
+        public final int            line;
+        public ElseStmtNode(List<StmtNode> body, int line) {
+            super("ElseStmt");
+            this.body = List.copyOf(body); 
+            this.line = line;
+        }
+    }
+    
+    public static class RangeExprNode extends ExprNode {
+        public final List<ExprNode> args;
+        public final int            line;
+        public RangeExprNode(List<ExprNode> args, int line) {
+            super("Range");
+            this.args = List.copyOf(args); 
             this.line = line;
         }
     }

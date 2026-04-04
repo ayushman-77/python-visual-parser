@@ -137,76 +137,127 @@ function SymTab({ r }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  AST  —  vertical pen-and-paper tree
+//  AST  —  Cytoscape Free Moving Tree
 // ══════════════════════════════════════════════════════════════════════
 function ASTTab({ r }) {
+  const ref = useRef(null);
+  const cyRef = useRef(null);
+
+  useEffect(() => {
+    if (!r.ast || !ref.current) return;
+    if (cyRef.current) { cyRef.current.destroy(); cyRef.current = null; }
+
+    const nodes = [];
+    const edges = [];
+    let idCounter = 1;
+
+    function traverse(node, parentId = null) {
+      if (!node) return;
+      const id = String(idCounter++);
+      
+      let label = astLabel(node);
+      const meta = astMeta(node);
+      if (meta) label += "\n" + meta;
+
+      nodes.push({ data: { id, label, type: node.nodeType } });
+
+      if (parentId) {
+        edges.push({ data: { id: `e${parentId}-${id}`, source: String(parentId), target: id } });
+      }
+
+      const kids = astKids(node);
+      kids.forEach(kid => traverse(kid, id));
+    }
+
+    traverse(r.ast);
+
+    cyRef.current = cytoscape({
+      container: ref.current,
+      elements: [...nodes, ...edges],
+      style: astStyle(),
+      layout: {
+        name: "dagre",
+        rankDir: "TB",
+        nodeSep: 40,
+        rankSep: 60,
+        animate: false,
+      },
+      userZoomingEnabled: true,
+      userPanningEnabled: true,
+      boxSelectionEnabled: false,
+    });
+
+    cyRef.current.ready(() => {
+      const cy = cyRef.current;
+      cy.nodes().forEach(n => n.style({ width: "label", height: "label" }));
+      cy.layout({ name: "dagre", rankDir: "TB", nodeSep: 40, rankSep: 60, animate: false }).run();
+      cy.fit(cy.elements(), 36);
+    });
+
+    return () => { if (cyRef.current) { cyRef.current.destroy(); cyRef.current = null; } };
+  }, [r.ast]);
+
   if (!r.ast) return <Empty icon="🌲" msg="No AST. Check the Errors tab." />;
+
   return (
-    <div className="ast-wrap">
+    <div className="ast-wrap" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <div className="ast-legend">
-        {[
-          ["Program",    "vn-Program"],
-          ["Assign",     "vn-AssignStmt"],
-          ["Print",      "vn-PrintStmt"],
-          ["For",        "vn-ForStmt"],
-          ["BinOp",      "vn-BinOp"],
-          ["Ident",      "vn-Ident"],
-          ["Literal",    "vn-Literal"],
-        ].map(([lbl,cls]) => (
-          <span key={lbl} className={`ast-legend-item vtree-node ${cls}`}>{lbl}</span>
-        ))}
+        <span style={{color:"var(--dim)", fontSize:11}}>{r.ast ? "Scroll = zoom · Drag = pan" : ""}</span>
       </div>
-      <VNode node={r.ast} />
+      <div ref={ref} style={{ flex: 1, width: "100%", position:"relative" }} />
     </div>
   );
 }
 
-function VNode({ node }) {
-  const [open, setOpen] = useState(true);
-  if (!node) return null;
-
-  const kids    = astKids(node);
-  const hasKids = kids.length > 0;
-
-  return (
-    <div className="vtree-group">
-      {/* Node box */}
-      <div
-        className={`vtree-node ${vnCls(node.nodeType)}`}
-        onClick={() => hasKids && setOpen(o => !o)}
-        style={{ cursor: hasKids ? "pointer" : "default" }}
-        title={hasKids ? (open ? "Collapse" : "Expand") : undefined}
-      >
-        {hasKids && (
-          <span style={{ fontSize:9, opacity:.6, marginRight:4 }}>{open?"▾":"▸"}</span>
-        )}
-        {astLabel(node)}
-        {astMeta(node) && <span className="vtree-meta">{astMeta(node)}</span>}
-      </div>
-
-      {/* Children with connecting lines */}
-      {hasKids && open && (
-        <>
-          <div className="vtree-vline" />
-          <div className="vtree-children">
-            {kids.map((kid, i) => (
-              <div key={i} className="vtree-child">
-                <VNode node={kid} />
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-function vnCls(t) {
-  return ({
-    Program:"vn-Program", AssignStmt:"vn-AssignStmt", PrintStmt:"vn-PrintStmt",
-    ForStmt:"vn-ForStmt", BinOp:"vn-BinOp", Ident:"vn-Ident",
-    Literal:"vn-Literal", ListLit:"vn-ListLit",
-  })[t] ?? "vn-default";
+function astStyle() {
+  return [
+    {
+      selector: "node",
+      style: {
+        "width": "label",
+        "height": "label",
+        "padding": "12px 14px",
+        "label": "data(label)",
+        "text-valign": "center",
+        "text-halign": "center",
+        "text-wrap": "wrap",
+        "font-family": "JetBrains Mono,Consolas,monospace",
+        "font-size": "11px",
+        "line-height": 1.4,
+        "shape": "roundrectangle",
+        "background-color": "#131220",
+        "border-color": "#302e50",
+        "border-width": 1.5,
+        "color": "#c8c8e0",
+      },
+    },
+    {
+      selector: "node[type='Program']",
+      style: { "background-color": "#0c0c22", "border-color": "#818cf8", "color": "#a5b4fc", "font-weight":"bold" }
+    },
+    {
+      selector: "node[type='AssignStmt'], node[type='Literal']",
+      style: { "background-color": "#071a0f", "border-color": "#4ade80", "color": "#86efac" }
+    },
+    {
+      selector: "node[type='IfStmt'], node[type='ElifStmt'], node[type='ElseStmt'], node[type='WhileStmt'], node[type='ForStmt']",
+      style: { "background-color": "#1a1500", "border-color": "#fbbf24", "color": "#fcd34d" }
+    },
+    {
+      selector: "node[type='PrintStmt']",
+      style: { "background-color": "#1e1b4b", "border-color": "#c084fc", "color": "#e9d5ff" }
+    },
+    {
+      selector: "edge",
+      style: {
+        "width": 1.5,
+        "line-color": "#302e50",
+        "target-arrow-color": "#302e50",
+        "target-arrow-shape": "triangle",
+        "curve-style": "bezier",
+      },
+    },
+  ];
 }
 
 function astLabel(n) {
@@ -220,6 +271,11 @@ function astLabel(n) {
     case "Ident":      return n.name;
     case "Literal":    return n.rawValue;
     case "ListLit":    return "[ list ]";
+    case "WhileStmt":  return "while";
+    case "IfStmt":     return "if";
+    case "ElifStmt":   return "elif";
+    case "ElseStmt":   return "else";
+    case "ExprStmt":   return "Expr";
     default:           return n.nodeType ?? "?";
   }
 }
@@ -239,6 +295,11 @@ function astKids(n) {
     case "ForStmt":    return [n.iterable, ...(n.body??[])].filter(Boolean);
     case "BinOp":      return [n.left, n.right].filter(Boolean);
     case "ListLit":    return n.elements ?? [];
+    case "WhileStmt":  return [n.condition, ...(n.body??[])].filter(Boolean);
+    case "IfStmt":     return [n.condition, ...(n.body??[]), ...(n.elifs??[]), n.elseStmt].filter(Boolean);
+    case "ElifStmt":   return [n.condition, ...(n.body??[])].filter(Boolean);
+    case "ElseStmt":   return [...(n.body??[])].filter(Boolean);
+    case "ExprStmt":   return [n.expr].filter(Boolean);
     default:           return [];
   }
 }
@@ -254,10 +315,32 @@ function CFGTab({ r }) {
     if (!r.cfg || !ref.current) return;
     if (cyRef.current) { cyRef.current.destroy(); cyRef.current = null; }
 
-    const { nodes, edges } = r.cfg;
+    let { nodes, edges } = r.cfg;
+    
+    // 🔥 Remove empty merge blocks for cleaner CFG connections
+    let refinedEdges = [...edges];
+    const refinedNodes = [];
+    
+    nodes.forEach(n => {
+      if (n.kind === "BLOCK" && (!n.statements || n.statements.length === 0)) {
+        const inEdges = refinedEdges.filter(e => String(e.to) === String(n.id));
+        const outEdges = refinedEdges.filter(e => String(e.from) === String(n.id));
+        
+        refinedEdges = refinedEdges.filter(e => String(e.to) !== String(n.id) && String(e.from) !== String(n.id));
+        
+        inEdges.forEach(ie => {
+          outEdges.forEach(oe => {
+            refinedEdges.push({ from: ie.from, to: oe.to, label: ie.label || oe.label });
+          });
+        });
+      } else {
+        refinedNodes.push(n);
+      }
+    });
+
     const elements = [
-      ...nodes.map(n => ({ data: { id: String(n.id), label: cfgLabel(n), kind: n.kind } })),
-      ...edges.map((e,i) => ({ data: { id:`e${i}`, source:String(e.from), target:String(e.to), label:e.label??""} })),
+      ...refinedNodes.map(n => ({ data: { id: String(n.id), label: cfgLabel(n), kind: n.kind } })),
+      ...refinedEdges.map((e,i) => ({ data: { id:`e${i}`, source:String(e.from), target:String(e.to), label:e.label??""} })),
     ];
 
     cyRef.current = cytoscape({
@@ -325,6 +408,8 @@ function cfgLabel(n) {
   if (n.kind === "ENTRY") return "ENTRY";
   if (n.kind === "EXIT")  return "EXIT";
   if (n.kind === "FOR_CONDITION") return (n.statements?.[0] ?? "for …").replace(/^for /, "⟳ for ");
+  if (n.kind === "IF_CONDITION") return (n.statements?.[0] ?? "if …").replace(/^if /, "⬦ if ").replace(/^elif /, "⬦ elif ");
+  if (n.kind === "WHILE_CONDITION") return (n.statements?.[0] ?? "while …").replace(/^while /, "⟳ while ");
 
   const stmts = n.statements ?? [];
 
@@ -384,7 +469,7 @@ function cfgStyle() {
       },
     },
     {
-      selector: "node[kind='FOR_CONDITION']",
+      selector: "node[kind='FOR_CONDITION'], node[kind='IF_CONDITION'], node[kind='WHILE_CONDITION']",
       style: {
         "shape":            "diamond",
         "background-color": "#1a1500",
@@ -433,6 +518,22 @@ function cfgStyle() {
       },
     },
     {
+      selector: "edge[label='yes']",
+      style: {
+        "line-color":         "#4ade80",
+        "target-arrow-color": "#4ade80",
+        "color":              "#4ade80",
+      },
+    },
+    {
+      selector: "edge[label='no']",
+      style: {
+        "line-color":         "#f87171",
+        "target-arrow-color": "#f87171",
+        "color":              "#f87171",
+      },
+    },
+    {
       selector: "edge[label='exit']",
       style: {
         "line-color":         "#4ade80",
@@ -478,45 +579,78 @@ function FFSection({ title, sets }) {
 //  PARSE TABLE
 // ══════════════════════════════════════════════════════════════════════
 const GRAMMAR = [
-  [0,"program",["stmt_list"]],
-  [1,"stmt_list",["stmt","stmt_list"]],
-  [2,"stmt_list",["ε"]],
-  [3,"stmt",["assign_stmt"]],
-  [4,"stmt",["print_stmt"]],
-  [5,"stmt",["for_stmt"]],
-  [6,"assign_stmt",["IDENT","assign_op","expr","NEWLINE"]],
-  [7,"assign_op",["="]],
-  [8,"assign_op",["+="]],
-  [9,"assign_op",["-="]],
-  [10,"print_stmt",["PRINT","(","expr_list",")","NEWLINE"]],
-  [11,"for_stmt",["FOR","IDENT","IN","expr",":","NEWLINE","INDENT","stmt_list","DEDENT"]],
-  [12,"expr_list",["expr","expr_list_tail"]],
-  [13,"expr_list_tail",["COMMA","expr","expr_list_tail"]],
-  [14,"expr_list_tail",["ε"]],
-  [15,"expr",["term","expr_prime"]],
-  [16,"expr_prime",["+","term","expr_prime"]],
-  [17,"expr_prime",["-","term","expr_prime"]],
-  [18,"expr_prime",["ε"]],
-  [19,"term",["factor","term_prime"]],
-  [20,"term_prime",["*","factor","term_prime"]],
-  [21,"term_prime",["/","factor","term_prime"]],
-  [22,"term_prime",["ε"]],
-  [23,"factor",["(","expr",")"]],
-  [24,"factor",["IDENT"]],
-  [25,"factor",["literal"]],
-  [26,"literal",["INT_LIT"]],
-  [27,"literal",["FLOAT_LIT"]],
-  [28,"literal",["STRING_LIT"]],
-  [29,"literal",["BOOL_LIT"]],
-  [30,"literal",["list_lit"]],
-  [31,"list_lit",["[","expr_list","]"]],
-  [32,"list_lit",["[","]"]],
+  [0, "program", ["stmt_list"]],
+  [1, "stmt_list", ["stmt","stmt_list"]],
+  [2, "stmt_list", ["ε"]],
+  [3, "stmt", ["assign_stmt"]],
+  [4, "stmt", ["print_stmt"]],
+  [5, "stmt", ["for_stmt"]],
+  [6, "stmt", ["while_stmt"]],
+  [7, "stmt", ["if_stmt"]],
+  [8, "assign_stmt", ["IDENT","assign_op","expr","NEWLINE"]],
+  [9, "assign_op", ["ASSIGN"]],
+  [10, "assign_op", ["PLUS_ASSIGN"]],
+  [11, "assign_op", ["MINUS_ASSIGN"]],
+  [12, "print_stmt", ["PRINT","LPAREN","expr_list","RPAREN","NEWLINE"]],
+  [13, "for_stmt", ["FOR","IDENT","IN","expr","COLON","NEWLINE","INDENT","stmt_list","DEDENT"]],
+  [14, "expr_list", ["expr","expr_list_tail"]],
+  [15, "expr_list_tail", ["COMMA","expr","expr_list_tail"]],
+  [16, "expr_list_tail", ["ε"]],
+  [17, "expr", ["term","expr_prime"]],
+  [18, "expr_prime", ["PLUS","term","expr_prime"]],
+  [19, "expr_prime", ["MINUS","term","expr_prime"]],
+  [20, "expr_prime", ["ε"]],
+  [21, "term", ["factor","term_prime"]],
+  [22, "term_prime", ["STAR","factor","term_prime"]],
+  [23, "term_prime", ["SLASH","factor","term_prime"]],
+  [24, "term_prime", ["ε"]],
+  [25, "factor", ["LPAREN","expr","RPAREN"]],
+  [26, "factor", ["IDENT","factor_tail"]],
+  [27, "factor_tail", ["LBRACKET","expr","RBRACKET"]],
+  [28, "factor_tail", ["ε"]],
+  [29, "factor", ["literal"]],
+  [30, "literal", ["INT_LIT"]],
+  [31, "literal", ["FLOAT_LIT"]],
+  [32, "literal", ["STRING_LIT"]],
+  [33, "literal", ["BOOL_LIT"]],
+  [34, "literal", ["list_lit"]],
+  [35, "list_lit", ["LBRACKET","list_contents"]],
+  [36, "list_contents", ["expr_list","RBRACKET"]],
+  [37, "list_contents", ["RBRACKET"]],
+  [38, "range_stmt", ["RANGE", "LPAREN", "expr_list", "RPAREN"]],
+  [39, "factor", ["range_stmt"]],
+  [40, "expr_prime", ["EQ","term","expr_prime"]],
+  [41, "expr_prime", ["NEQ","term","expr_prime"]],
+  [42, "expr_prime", ["LT","term","expr_prime"]],
+  [43, "expr_prime", ["LE","term","expr_prime"]],
+  [44, "expr_prime", ["GT","term","expr_prime"]],
+  [45, "expr_prime", ["GE","term","expr_prime"]],
+  [46, "condition_stmt", ["IDENT","condition_op","expr","NEWLINE"]],
+  [47, "condition_op", ["EQ"]],
+  [48, "condition_op", ["NEQ"]],
+  [49, "condition_op", ["LT"]],
+  [50, "condition_op", ["LE"]],
+  [51, "condition_op", ["GT"]],
+  [52, "condition_op", ["GE"]],
+  [53, "while_stmt", ["WHILE", "expr", "COLON", "NEWLINE", "INDENT", "stmt_list", "DEDENT"]],
+  [54, "term_prime", ["MOD","factor","term_prime"]],
+  [55, "if_stmt", ["IF", "expr", "COLON", "NEWLINE", "INDENT", "stmt_list", "DEDENT", "optional_else"]],
+  [56, "optional_else", ["elif_stmt"]],
+  [57, "optional_else", ["else_stmt"]],
+  [58, "optional_else", ["ε"]],
+  [59, "elif_stmt", ["ELIF", "expr", "COLON", "NEWLINE", "INDENT", "stmt_list", "DEDENT", "optional_else"]],
+  [60, "else_stmt", ["ELSE", "COLON", "NEWLINE", "INDENT", "stmt_list", "DEDENT"]]
 ];
 
 const NT_SET = new Set([
-  "program","stmt_list","stmt","assign_stmt","assign_op","print_stmt",
-  "for_stmt","expr_list","expr_list_tail","expr","expr_prime",
-  "term","term_prime","factor","literal","list_lit",
+  "program","stmt_list","stmt",
+  "assign_stmt","assign_op", "condition_stmt", "condition_op",
+  "print_stmt","for_stmt", "while_stmt", "range_stmt",
+  "if_stmt", "elif_stmt", "else_stmt", "optional_else",
+  "expr_list","expr_list_tail",
+  "expr","expr_prime",
+  "term","term_prime",
+  "factor","factor_tail","literal","list_lit","list_contents"
 ]);
 
 function ParseTab({ r }) {
