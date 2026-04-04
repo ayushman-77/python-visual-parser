@@ -38,12 +38,17 @@ public class Server {
 
     public static class ErrorResponse {
         public final String error;
-        public ErrorResponse(String error) { this.error = error; }
+        public ErrorResponse(String error) { 
+            this.error = error; 
+        }
     }
 
     public static class HealthResponse {
         public final String status;
         public final int    port;
-        public HealthResponse(String status, int port) { this.status = status; this.port = port; }
+        public HealthResponse(String status, int port) { 
+            this.status = status; 
+            this.port = port; 
+        }
     }
 }

@@ -28,7 +28,9 @@ public class Lexer {
         public final int       line;
 
         public Token(TokenType type, String value, int line) {
-            this.type = type; this.value = value; this.line = line;
+            this.type = type; 
+            this.value = value; 
+            this.line = line;
         }
 
         @Override 
@@ -40,16 +42,22 @@ public class Lexer {
     public static class LexerError {
         public final String message;
         public final int    line;
-        public LexerError(String message, int line) { this.message = message; this.line = line; }
+        public LexerError(String message, int line) { 
+            this.message = message; 
+            this.line = line; 
+        }
     }
 
     public static class Result {
         public final List<Token>      tokens;
         public final List<LexerError> errors;
         public Result(List<Token> tokens, List<LexerError> errors) {
-            this.tokens = tokens; this.errors = errors;
+            this.tokens = tokens; 
+            this.errors = errors;
         }
-        public boolean hasErrors() { return !errors.isEmpty(); }
+        public boolean hasErrors() { 
+            return !errors.isEmpty(); 
+        }
     }
 
     private record TokenRule(TokenType type, Pattern pattern) {}
@@ -86,7 +94,9 @@ public class Lexer {
     private final List<Token>      tokens = new ArrayList<>();
     private final List<LexerError> errors = new ArrayList<>();
 
-    public Lexer(String source) { this.source = source; }
+    public Lexer(String source) { 
+        this.source = source; 
+    }
 
     public Result tokenize() {
         String[] lines = source.split("\n", -1);
@@ -98,7 +108,8 @@ public class Lexer {
             String raw     = lines[i];
             String trimmed = raw.stripLeading();
 
-            if (trimmed.isEmpty() || trimmed.startsWith("#")) continue;
+            if (trimmed.isEmpty() || trimmed.startsWith("#")) 
+                continue;
 
             int indent  = raw.length() - trimmed.length();
             int current = indentStack.peek();
@@ -123,7 +134,10 @@ public class Lexer {
         }
 
         int last = lines.length;
-        while (indentStack.peek() > 0) { indentStack.pop(); tokens.add(new Token(TokenType.DEDENT, "", last)); }
+        while (indentStack.peek() > 0) { 
+            indentStack.pop(); 
+            tokens.add(new Token(TokenType.DEDENT, "", last)); 
+        }
         tokens.add(new Token(TokenType.EOF, "$", last));
 
         return new Result(List.copyOf(tokens), List.copyOf(errors));
@@ -132,15 +146,19 @@ public class Lexer {
     private void scanLine(String line, int ln) {
         int pos = 0;
         while (pos < line.length()) {
-            if (Character.isWhitespace(line.charAt(pos))) { pos++; continue; }
-            String rem     = line.substring(pos);
+            if (Character.isWhitespace(line.charAt(pos))) { 
+                pos++; 
+                continue; 
+            }
+            String rem = line.substring(pos);
             boolean matched = false;
             for (TokenRule rule : RULES) {
                 Matcher m = rule.pattern().matcher(rem);
                 if (m.lookingAt()) {
-                    String    val  = m.group();
+                    String val = m.group();
                     TokenType type = rule.type();
-                    if (type == TokenType.IDENT && KEYWORDS.containsKey(val)) type = KEYWORDS.get(val);
+                    if (type == TokenType.IDENT && KEYWORDS.containsKey(val)) 
+                        type = KEYWORDS.get(val);
                     tokens.add(new Token(type, val, ln));
                     pos += val.length();
                     matched = true;

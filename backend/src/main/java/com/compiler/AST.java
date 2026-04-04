@@ -8,15 +8,21 @@ public class AST {
 
     public abstract static class Node {
         public final String nodeType;
-        protected Node(String nodeType) { this.nodeType = nodeType; }
+        protected Node(String nodeType) { 
+            this.nodeType = nodeType; 
+        }
     }
 
     public abstract static class StmtNode extends Node {
-        protected StmtNode(String t) { super(t); }
+        protected StmtNode(String t) { 
+            super(t); 
+        }
     }
 
     public abstract static class ExprNode extends Node {
-        protected ExprNode(String t) { super(t); }
+        protected ExprNode(String t) { 
+            super(t); 
+        }
     }
 
     public static class ProgramNode extends Node {
@@ -34,7 +40,10 @@ public class AST {
         public final int      line;
         public AssignStmtNode(String ident, AssignOp op, ExprNode expr, int line) {
             super("AssignStmt");
-            this.ident = ident; this.op = op; this.expr = expr; this.line = line;
+            this.ident = ident; 
+            this.op = op; 
+            this.expr = expr; 
+            this.line = line;
         }
     }
 
@@ -43,7 +52,8 @@ public class AST {
         public final int            line;
         public PrintStmtNode(List<ExprNode> args, int line) {
             super("PrintStmt");
-            this.args = List.copyOf(args); this.line = line;
+            this.args = List.copyOf(args); 
+            this.line = line;
         }
     }
 
@@ -54,8 +64,10 @@ public class AST {
         public final int            line;
         public ForStmtNode(String loopVar, ExprNode iterable, List<StmtNode> body, int line) {
             super("ForStmt");
-            this.loopVar = loopVar; this.iterable = iterable;
-            this.body = List.copyOf(body); this.line = line;
+            this.loopVar = loopVar; 
+            this.iterable = iterable;
+            this.body = List.copyOf(body); 
+            this.line = line;
         }
     }
 
@@ -65,14 +77,21 @@ public class AST {
         public final int      line;
         public BinOpNode(String op, ExprNode left, ExprNode right, int line) {
             super("BinOp");
-            this.op = op; this.left = left; this.right = right; this.line = line;
+            this.op = op; 
+            this.left = left; 
+            this.right = right; 
+            this.line = line;
         }
     }
 
     public static class IdentNode extends ExprNode {
         public final String name;
         public final int    line;
-        public IdentNode(String name, int line) { super("Ident"); this.name = name; this.line = line; }
+        public IdentNode(String name, int line) { 
+            super("Ident"); 
+            this.name = name; 
+            this.line = line; 
+        }
     }
 
     public static class LiteralNode extends ExprNode {
@@ -81,7 +100,9 @@ public class AST {
         public final int               line;
         public LiteralNode(String rawValue, SymbolTable.VarType varType, int line) {
             super("Literal");
-            this.rawValue = rawValue; this.varType = varType; this.line = line;
+            this.rawValue = rawValue; 
+            this.varType = varType; 
+            this.line = line;
         }
     }
 
@@ -90,7 +111,8 @@ public class AST {
         public final int            line;
         public ListLitNode(List<ExprNode> elements, int line) {
             super("ListLit");
-            this.elements = List.copyOf(elements); this.line = line;
+            this.elements = List.copyOf(elements); 
+            this.line = line;
         }
     }
 

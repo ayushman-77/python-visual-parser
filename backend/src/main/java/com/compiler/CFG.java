@@ -26,8 +26,10 @@ public class CFG {
         public final int          startLine;
 
         public CFGNode(int id, NodeKind kind, List<String> statements, int startLine) {
-            this.id = id; this.kind = kind;
-            this.statements = List.copyOf(statements); this.startLine = startLine;
+            this.id = id; 
+            this.kind = kind;
+            this.statements = List.copyOf(statements); 
+            this.startLine = startLine;
         }
 
         static CFGNode sentinel(int id, NodeKind kind) {
@@ -37,15 +39,22 @@ public class CFG {
     public static class CFGEdge {
         public final int    from, to;
         public final String label;
-        public CFGEdge(int from, int to, String label) { this.from = from; this.to = to; this.label = label; }
-        public CFGEdge(int from, int to)               { this(from, to, ""); }
+        public CFGEdge(int from, int to, String label) { 
+            this.from = from; 
+            this.to = to; 
+            this.label = label; 
+        }
+        public CFGEdge(int from, int to) { 
+            this(from, to, ""); 
+        }
     }
 
     public static class CFGGraph {
         public final List<CFGNode> nodes;
         public final List<CFGEdge> edges;
         public CFGGraph(List<CFGNode> nodes, List<CFGEdge> edges) {
-            this.nodes = List.copyOf(nodes); this.edges = List.copyOf(edges);
+            this.nodes = List.copyOf(nodes); 
+            this.edges = List.copyOf(edges);
         }
     }
 
@@ -103,13 +112,21 @@ public class CFG {
             return cond.id;
         }
 
-        private CFGNode add(CFGNode n) { nodes.add(n); return n; }
-        private int     next()         { return id++; }
+        private CFGNode add(CFGNode n) { 
+            nodes.add(n); 
+            return n; 
+        }
+        private int next() { 
+            return id++; 
+        }
 
         private int lineOf(StmtNode s) {
-            if (s instanceof AssignStmtNode a) return a.line;
-            if (s instanceof PrintStmtNode  p) return p.line;
-            if (s instanceof ForStmtNode    f) return f.line;
+            if (s instanceof AssignStmtNode a) 
+                return a.line;
+            if (s instanceof PrintStmtNode p)
+                 return p.line;
+            if (s instanceof ForStmtNode f) 
+                return f.line;
             return 0;
         }
 
@@ -125,13 +142,19 @@ public class CFG {
         }
 
         private String opStr(AST.AssignOp op) {
-            return switch (op) { case ASSIGN -> "="; case PLUS_ASSIGN -> "+="; case MINUS_ASSIGN -> "-="; };
+            return switch (op) { 
+                case ASSIGN -> "="; 
+                case PLUS_ASSIGN -> "+="; 
+                case MINUS_ASSIGN -> "-="; };
         }
 
         private String exprStr(ExprNode e) {
-            if (e instanceof LiteralNode  l) return l.rawValue;
-            if (e instanceof IdentNode    i) return i.name;
-            if (e instanceof BinOpNode    b) return exprStr(b.left) + " " + b.op + " " + exprStr(b.right);
+            if (e instanceof LiteralNode l) 
+                return l.rawValue;
+            if (e instanceof IdentNode i) 
+                return i.name;
+            if (e instanceof BinOpNode b) 
+                return exprStr(b.left) + " " + b.op + " " + exprStr(b.right);
             if (e instanceof ListLitNode  l) {
                 StringJoiner sj = new StringJoiner(", ");
                 l.elements.forEach(el -> sj.add(exprStr(el)));

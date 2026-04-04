@@ -14,12 +14,17 @@ public class Parser {
         public final List<String> rhs;
 
         public Production(int index, String lhs, List<String> rhs) {
-            this.index = index; this.lhs = lhs; this.rhs = List.copyOf(rhs);
+            this.index = index; 
+            this.lhs = lhs; 
+            this.rhs = List.copyOf(rhs);
         }
 
-        public boolean isEpsilon() { return rhs.size() == 1 && rhs.get(0).equals(Grammar.EPSILON); }
+        public boolean isEpsilon() { 
+            return rhs.size() == 1 && rhs.get(0).equals(Grammar.EPSILON); 
+        }
 
-        @Override public String toString() {
+        @Override 
+        public String toString() {
             return String.format("P%d: %s → %s", index, lhs, String.join(" ", rhs));
         }
     }
@@ -78,14 +83,17 @@ public class Parser {
             new Production(35, "list_contents", List.of("RBRACKET"))
         );
 
-        public static boolean isNonTerminal(String s) { return NON_TERMINALS.contains(s); }
+        public static boolean isNonTerminal(String s) { 
+            return NON_TERMINALS.contains(s); 
+        }
     }
 
     public static class FirstFollowResult {
         public final Map<String, Set<String>> first;
         public final Map<String, Set<String>> follow;
         public FirstFollowResult(Map<String, Set<String>> first, Map<String, Set<String>> follow) {
-            this.first = first; this.follow = follow;
+            this.first = first; 
+            this.follow = follow;
         }
     }
 
@@ -119,31 +127,41 @@ public class Parser {
             Set<String> out = new LinkedHashSet<>();
             boolean allNullable = true;
             for (String s : syms) {
-                if (s.equals(Grammar.EPSILON)) { out.add(Grammar.EPSILON); break; }
+                if (s.equals(Grammar.EPSILON)) { 
+                    out.add(Grammar.EPSILON); 
+                    break; 
+                }
                 Set<String> sf = Grammar.isNonTerminal(s) ? first.getOrDefault(s, Set.of()) : Set.of(s);
                 out.addAll(sf);
                 out.remove(Grammar.EPSILON);
-                if (!sf.contains(Grammar.EPSILON)) { allNullable = false; break; }
+                if (!sf.contains(Grammar.EPSILON)) { 
+                    allNullable = false; 
+                    break; 
+                }
             }
-            if (allNullable && !syms.isEmpty()) out.add(Grammar.EPSILON);
+            if (allNullable && !syms.isEmpty()) 
+                out.add(Grammar.EPSILON);
             return out;
         }
 
-        private static void computeFollow(Map<String, Set<String>> first,
-                                           Map<String, Set<String>> follow) {
+        private static void computeFollow(Map<String, Set<String>> first, Map<String, Set<String>> follow) {
             boolean changed = true;
             while (changed) {
                 changed = false;
                 for (var p : Grammar.ALL) {
                     for (int i = 0; i < p.rhs.size(); i++) {
                         String B = p.rhs.get(i);
-                        if (!Grammar.isNonTerminal(B)) continue;
-                        var beta     = p.rhs.subList(i + 1, p.rhs.size());
-                        var firstB   = firstOfSeq(beta, first);
-                        var followB  = follow.get(B);
-                        for (String t : firstB) if (!t.equals(Grammar.EPSILON) && followB.add(t)) changed = true;
+                        if (!Grammar.isNonTerminal(B)) 
+                            continue;
+                        var beta = p.rhs.subList(i + 1, p.rhs.size());
+                        var firstB = firstOfSeq(beta, first);
+                        var followB = follow.get(B);
+                        for (String t : firstB) 
+                            if (!t.equals(Grammar.EPSILON) && followB.add(t)) 
+                                changed = true;
                         if (firstB.contains(Grammar.EPSILON))
-                            if (followB.addAll(follow.get(p.lhs))) changed = true;
+                            if (followB.addAll(follow.get(p.lhs))) 
+                                changed = true;
                     }
                 }
             }
@@ -161,23 +179,25 @@ public class Parser {
         public final List<String> conflicts;
 
         public ParsingTable(FirstFollowResult ff) {
-            var t    = new LinkedHashMap<String, Map<String, Production>>();
+            var t = new LinkedHashMap<String, Map<String, Production>>();
             var conf = new ArrayList<String>();
-            for (String nt : Grammar.NON_TERMINALS) t.put(nt, new LinkedHashMap<>());
+            for (String nt : Grammar.NON_TERMINALS) 
+                t.put(nt, new LinkedHashMap<>());
 
             for (var p : Grammar.ALL) {
                 var mutableFirst = mutableCopy(ff.first);
-                var firstAlpha   = FirstFollowComputer.firstOfSeq(p.rhs, mutableFirst);
+                var firstAlpha = FirstFollowComputer.firstOfSeq(p.rhs, mutableFirst);
 
                 for (String term : firstAlpha) {
-                    if (term.equals(Grammar.EPSILON)) continue;
+                    if (term.equals(Grammar.EPSILON)) 
+                        continue;
                     put(t, conf, p.lhs, term, p);
                 }
                 if (firstAlpha.contains(Grammar.EPSILON))
                     for (String b : ff.follow.get(p.lhs))
                         put(t, conf, p.lhs, b, p);
             }
-            this.table     = Collections.unmodifiableMap(t);
+            this.table = Collections.unmodifiableMap(t);
             this.conflicts = List.copyOf(conf);
         }
 
@@ -186,12 +206,14 @@ public class Parser {
             return row == null ? null : row.get(term);
         }
 
-        public boolean hasConflicts() { return !conflicts.isEmpty(); }
+        public boolean hasConflicts() { 
+            return !conflicts.isEmpty(); 
+        }
 
-        private static void put(Map<String, Map<String, Production>> t, List<String> conf,
-                                  String nt, String term, Production p) {
+        private static void put(Map<String, Map<String, Production>> t, List<String> conf, String nt, String term, Production p) {
             var row = t.get(nt);
-            if (row.containsKey(term)) conf.add("CONFLICT M[" + nt + "][" + term + "]: " + row.get(term) + " vs " + p);
+            if (row.containsKey(term)) 
+                conf.add("CONFLICT M[" + nt + "][" + term + "]: " + row.get(term) + " vs " + p);
             else row.put(term, p);
         }
 
@@ -205,9 +227,11 @@ public class Parser {
     public static class ParserError {
         public final String message;
         public final int    line;
-        public final String phase;   // "syntax" | "semantic"
+        public final String phase;
         public ParserError(String message, int line, String phase) {
-            this.message = message; this.line = line; this.phase = phase;
+            this.message = message; 
+            this.line = line; 
+            this.phase = phase;
         }
     }
 
@@ -216,9 +240,13 @@ public class Parser {
         public final List<SymbolTable.SymbolEntry>  symbolTable;
         public final List<ParserError>              errors;
         public ParserResult(ProgramNode ast, List<SymbolTable.SymbolEntry> st, List<ParserError> err) {
-            this.ast = ast; this.symbolTable = st; this.errors = err;
+            this.ast = ast; 
+            this.symbolTable = st; 
+            this.errors = err;
         }
-        public boolean hasErrors() { return !errors.isEmpty(); }
+        public boolean hasErrors() { 
+            return !errors.isEmpty(); 
+        }
     }
     
     private final List<Token>       tokens;
@@ -235,20 +263,32 @@ public class Parser {
         return new ParserResult(root, sym.snapshot(), errs);
     }
 
-    private Token peek()          { return tokens.get(Math.min(pos, tokens.size() - 1)); }
-    private Token consume()       { Token t = peek(); if (pos < tokens.size() - 1) pos++; return t; }
-    private boolean at(TokenType t) { return peek().type == t; }
+    private Token peek() { 
+        return tokens.get(Math.min(pos, tokens.size() - 1)); 
+    }
+    private Token consume() { 
+        Token t = peek(); 
+        if (pos < tokens.size() - 1) 
+            pos++; 
+        return t; 
+    }
+    private boolean at(TokenType t) { 
+        return peek().type == t; 
+    }
 
     private Token expect(TokenType exp) {
         Token t = peek();
-        if (t.type == exp) return consume();
+        if (t.type == exp) 
+            return consume();
         errs.add(new ParserError("Expected " + exp + " but got " + t.type + " (\"" + t.value + "\")", t.line, "syntax"));
         return t;
     }
 
     private void skipLine() {
-        while (peek().type != TokenType.NEWLINE && peek().type != TokenType.EOF) consume();
-        if (at(TokenType.NEWLINE)) consume();
+        while (peek().type != TokenType.NEWLINE && peek().type != TokenType.EOF) 
+            consume();
+        if (at(TokenType.NEWLINE)) 
+            consume();
     }
     
     private ProgramNode parseProgram() {
@@ -259,12 +299,19 @@ public class Parser {
 
     private List<StmtNode> parseStmtList() {
         List<StmtNode> list = new ArrayList<>();
-        while (isStmtStart()) { StmtNode s = parseStmt(); if (s != null) list.add(s); }
+        while (isStmtStart()) { 
+            StmtNode s = parseStmt(); 
+            if (s != null) 
+                list.add(s); 
+        }
         return list;
     }
 
     private boolean isStmtStart() {
-        return switch (peek().type) { case IDENT, PRINT, FOR -> true; default -> false; };
+        return switch (peek().type) { 
+            case IDENT, PRINT, FOR -> true; 
+            default -> false; 
+        };
     }
 
     private StmtNode parseStmt() {
@@ -280,10 +327,23 @@ public class Parser {
         Token id = expect(TokenType.IDENT);
         AST.AssignOp op;
         switch (peek().type) {
-            case ASSIGN       -> { consume(); op = AST.AssignOp.ASSIGN;       }
-            case PLUS_ASSIGN  -> { consume(); op = AST.AssignOp.PLUS_ASSIGN;  }
-            case MINUS_ASSIGN -> { consume(); op = AST.AssignOp.MINUS_ASSIGN; }
-            default           -> { errs.add(new ParserError("Expected assignment op after '" + id.value + "'", peek().line, "syntax")); skipLine(); return null; }
+            case ASSIGN -> { 
+                consume(); 
+                op = AST.AssignOp.ASSIGN;       
+            }
+            case PLUS_ASSIGN -> { 
+                consume(); 
+                op = AST.AssignOp.PLUS_ASSIGN;  
+            }
+            case MINUS_ASSIGN -> { 
+                consume(); 
+                op = AST.AssignOp.MINUS_ASSIGN; 
+            }
+            default -> { 
+                errs.add(new ParserError("Expected assignment op after '" + id.value + "'", peek().line, "syntax")); 
+                skipLine(); 
+                return null; 
+            }
         }
         ExprNode expr = parseExpr();
         expect(TokenType.NEWLINE);
@@ -323,7 +383,9 @@ public class Parser {
     private List<ExprNode> parseExprList() {
         List<ExprNode> list = new ArrayList<>();
         list.add(parseExpr());
-        while (at(TokenType.COMMA)) { consume(); list.add(parseExpr()); }
+        while (at(TokenType.COMMA)) { 
+            consume(); 
+            list.add(parseExpr()); }
         return list;
     }
 
@@ -348,7 +410,11 @@ public class Parser {
     private ExprNode parseFactor() {
         Token t = peek();
         return switch (t.type) {
-            case LPAREN -> { consume(); ExprNode e = parseExpr(); expect(TokenType.RPAREN); yield e; }
+            case LPAREN -> { 
+                consume(); 
+                ExprNode e = parseExpr(); 
+                expect(TokenType.RPAREN); yield e; 
+            }
             case IDENT -> {
                 consume();
 
@@ -370,28 +436,51 @@ public class Parser {
                 yield base;
             }
             case INT_LIT, FLOAT_LIT, STRING_LIT, BOOL_LIT, LBRACKET -> parseLiteral();
-            default -> { errs.add(new ParserError("Unexpected token in expr: " + t.type, t.line, "syntax")); consume(); yield new LiteralNode("?", VarType.UNKNOWN, t.line); }
+            default -> { 
+                errs.add(new ParserError("Unexpected token in expr: " + t.type, t.line, "syntax")); 
+                consume(); 
+                yield new LiteralNode("?", VarType.UNKNOWN, t.line); 
+            }
         };
     }
 
     private ExprNode parseLiteral() {
         Token t = peek();
         return switch (t.type) {
-            case INT_LIT, FLOAT_LIT, STRING_LIT, BOOL_LIT -> { consume(); yield new LiteralNode(t.value, VarType.from(t.type), t.line); }
-            case LBRACKET -> { Token b = consume(); List<ExprNode> els = at(TokenType.RBRACKET) ? new ArrayList<>() : parseExprList(); expect(TokenType.RBRACKET); yield new ListLitNode(els, b.line); }
-            default -> { errs.add(new ParserError("Expected literal", t.line, "syntax")); yield new LiteralNode("?", VarType.UNKNOWN, t.line); }
+            case INT_LIT, FLOAT_LIT, STRING_LIT, BOOL_LIT -> { 
+                consume(); 
+                yield new LiteralNode(t.value, VarType.from(t.type), t.line); 
+            }
+            case LBRACKET -> { 
+                Token b = consume(); 
+                List<ExprNode> els = at(TokenType.RBRACKET) ? new ArrayList<>() : parseExprList(); 
+                expect(TokenType.RBRACKET); 
+                yield new ListLitNode(els, b.line); 
+            }
+            default -> { 
+                errs.add(new ParserError("Expected literal", t.line, "syntax")); 
+                yield new LiteralNode("?", VarType.UNKNOWN, t.line); 
+            }
         };
     }
 
     private VarType inferType(ExprNode e) {
-        if (e instanceof LiteralNode l)  return l.varType;
-        if (e instanceof ListLitNode)    return VarType.LIST;
-        if (e instanceof IdentNode id)   { var en = sym.lookup(id.name); return en != null ? en.type : VarType.UNKNOWN; }
+        if (e instanceof LiteralNode l)  
+            return l.varType;
+        if (e instanceof ListLitNode)    
+            return VarType.LIST;
+        if (e instanceof IdentNode id) { 
+            var en = sym.lookup(id.name); 
+            return en != null ? en.type : VarType.UNKNOWN; 
+        }
         if (e instanceof BinOpNode b) {
             VarType l = inferType(b.left), r = inferType(b.right);
-            if (l == VarType.FLOAT || r == VarType.FLOAT) return VarType.FLOAT;
-            if (l == VarType.INT   && r == VarType.INT)   return VarType.INT;
-            if (l == VarType.STR   && r == VarType.STR && b.op.equals("+")) return VarType.STR;
+            if (l == VarType.FLOAT || r == VarType.FLOAT) 
+                return VarType.FLOAT;
+            if (l == VarType.INT   && r == VarType.INT)   
+                return VarType.INT;
+            if (l == VarType.STR   && r == VarType.STR && b.op.equals("+")) 
+                return VarType.STR;
         }
         return VarType.UNKNOWN;
     }

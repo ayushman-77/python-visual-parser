@@ -8,10 +8,10 @@ A web-based tool that parses a simplified Python-like language and **visualizes 
 
 This project helps you understand how a compiler works internally by breaking down code into different stages:
 
-- 🔹 Tokenization  
-- 🔹 Symbol Table Generation  
-- 🔹 Abstract Syntax Tree (AST) Construction  
-- 🔹 Parsing Visualization  
+-  Tokenization  
+-  Symbol Table Generation  
+-  Abstract Syntax Tree (AST) Construction  
+-  Parsing Visualization  
 
 It is designed as an **educational tool** for students learning compilers and programming languages.
 

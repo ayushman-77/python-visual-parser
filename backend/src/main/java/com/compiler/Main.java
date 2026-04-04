@@ -34,8 +34,12 @@ public class Main {
         public List<LexerError>     lexerErrors  = new ArrayList<>();
         public List<ParserError>    parserErrors = new ArrayList<>();
 
-        public boolean hasErrors()  { return !lexerErrors.isEmpty() || !parserErrors.isEmpty(); }
-        public boolean isComplete() { return cfg != null; }
+        public boolean hasErrors()  { 
+            return !lexerErrors.isEmpty() || !parserErrors.isEmpty(); 
+        }
+        public boolean isComplete() { 
+            return cfg != null; 
+        }
     }
 
     public static class Pipeline {
@@ -61,7 +65,8 @@ public class Main {
             out.symbolTable   = pr.symbolTable;
             out.parserErrors  = pr.errors;
 
-            if (pr.ast != null) out.cfg = CFG.Builder.build(pr.ast);
+            if (pr.ast != null) 
+                out.cfg = CFG.Builder.build(pr.ast);
 
             return out;
         }
@@ -75,12 +80,18 @@ public class Main {
 
         static void show(CompilerResult r) {
             header("COMPILER OUTPUT");
-            if (r.tokens      != null) tokens(r.tokens);
-            if (r.firstFollow != null) firstFollow(r.firstFollow);
-            if (r.parsingTable!= null) parsingTable(r.parsingTable);
-            if (r.symbolTable != null) symbolTable(r.symbolTable);
-            if (r.ast         != null) ast(r.ast);
-            if (r.cfg         != null) cfg(r.cfg);
+            if (r.tokens != null) 
+                tokens(r.tokens);
+            if (r.firstFollow != null) 
+                firstFollow(r.firstFollow);
+            if (r.parsingTable!= null) 
+                parsingTable(r.parsingTable);
+            if (r.symbolTable != null) 
+                symbolTable(r.symbolTable);
+            if (r.ast != null) 
+                ast(r.ast);
+            if (r.cfg != null) 
+                cfg(r.cfg);
             errors(r);
         }
 
@@ -93,7 +104,7 @@ public class Main {
             for (Token t : tokens) {
                 String c = switch (t.type) {
                     case IDENT                                     -> CY;
-                    case INT_LIT, FLOAT_LIT, BOOL_LIT, STRING_LIT -> YL;
+                    case INT_LIT, FLOAT_LIT, BOOL_LIT, STRING_LIT  -> YL;
                     case FOR, IN, PRINT                            -> BL;
                     case INDENT, DEDENT, NEWLINE, EOF              -> DM;
                     default                                        -> R;
@@ -116,7 +127,8 @@ public class Main {
                 pt.conflicts.forEach(c -> System.out.println("  " + RD + c + R));
             }
             pt.table.forEach((nt, row) -> {
-                if (row.isEmpty()) return;
+                if (row.isEmpty()) 
+                    return;
                 System.out.println("  " + CY + nt + R);
                 row.forEach((term, p) -> System.out.printf("    [%-20s] → %s%n", term, p));
             });
@@ -183,7 +195,10 @@ public class Main {
         }
 
         static void errors(CompilerResult r) {
-            if (!r.hasErrors()) { System.out.println("\n" + GN + "  ✓ No errors." + R); return; }
+            if (!r.hasErrors()) { 
+                System.out.println("\n" + GN + "  ✓ No errors." + R); 
+                return; 
+            }
             section("ERRORS");
             r.lexerErrors.forEach(e  -> System.out.printf(RD + "  [LEXER    line %3d] %s%n" + R, e.line, e.message));
             r.parserErrors.forEach(e -> System.out.printf(RD + "  [%-8s line %3d] %s%n" + R, e.phase.toUpperCase(), e.line, e.message));
@@ -199,7 +214,9 @@ public class Main {
             System.out.println("\n" + BOLD + CY + "── " + t + " " + "─".repeat(Math.max(0, 57 - t.length())) + R);
         }
 
-        static void sep(int w) { System.out.println(DM + "─".repeat(w) + R); }
+        static void sep(int w) { 
+            System.out.println(DM + "─".repeat(w) + R); 
+        }
     }
 
     public static void main(String[] args) {
