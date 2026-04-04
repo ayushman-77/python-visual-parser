@@ -31,7 +31,8 @@ public class Lexer {
             this.type = type; this.value = value; this.line = line;
         }
 
-        @Override public String toString() {
+        @Override 
+        public String toString() {
             return String.format("Token(%-16s \"%s\"  line %d)", type, value, line);
         }
     }
