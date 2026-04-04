@@ -19,8 +19,7 @@ public class Server {
     @PostMapping("/compile")
     public ResponseEntity<?> compile(@RequestBody CompileRequest req) {
         if (req.code == null || req.code.isBlank()) {
-            return ResponseEntity.badRequest()
-                .body(new ErrorResponse("Request body must contain a non-empty 'code' field."));
+            return ResponseEntity.badRequest().body(new ErrorResponse("Request body must contain a non-empty 'code' field."));
         }
         Main.CompilerResult result = Main.Pipeline.compile(req.code);
         return ResponseEntity.ok(result);

@@ -69,18 +69,18 @@ public class Parser {
             new Production(21, "term_prime",     List.of("SLASH","factor","term_prime")),
             new Production(22, "term_prime",     List.of(EPSILON)),
             new Production(23, "factor",         List.of("LPAREN","expr","RPAREN")),
-            new Production(24, "factor", List.of("IDENT","factor_tail")),
-            new Production(25, "factor_tail", List.of("LBRACKET","expr","RBRACKET")),
-            new Production(26, "factor_tail", List.of(Grammar.EPSILON)),
+            new Production(24, "factor",         List.of("IDENT","factor_tail")),
+            new Production(25, "factor_tail",    List.of("LBRACKET","expr","RBRACKET")),
+            new Production(26, "factor_tail",    List.of(Grammar.EPSILON)),
             new Production(27, "factor",         List.of("literal")),
             new Production(28, "literal",        List.of("INT_LIT")),
             new Production(29, "literal",        List.of("FLOAT_LIT")),
             new Production(30, "literal",        List.of("STRING_LIT")),
             new Production(31, "literal",        List.of("BOOL_LIT")),
             new Production(32, "literal",        List.of("list_lit")),
-            new Production(33, "list_lit", List.of("LBRACKET","list_contents")),
-            new Production(34, "list_contents", List.of("expr_list","RBRACKET")),
-            new Production(35, "list_contents", List.of("RBRACKET"))
+            new Production(33, "list_lit",       List.of("LBRACKET","list_contents")),
+            new Production(34, "list_contents",  List.of("expr_list","RBRACKET")),
+            new Production(35, "list_contents",  List.of("RBRACKET"))
         );
 
         public static boolean isNonTerminal(String s) { 
@@ -110,7 +110,8 @@ public class Parser {
 
         private static Map<String, Set<String>> initMap() {
             Map<String, Set<String>> m = new LinkedHashMap<>();
-            for (String nt : Grammar.NON_TERMINALS) m.put(nt, new LinkedHashSet<>());
+            for (String nt : Grammar.NON_TERMINALS) 
+                m.put(nt, new LinkedHashSet<>());
             return m;
         }
 
@@ -119,7 +120,8 @@ public class Parser {
             while (changed) {
                 changed = false;
                 for (var p : Grammar.ALL)
-                    if (first.get(p.lhs).addAll(firstOfSeq(p.rhs, first))) changed = true;
+                    if (first.get(p.lhs).addAll(firstOfSeq(p.rhs, first))) 
+                        changed = true;
             }
         }
 
@@ -214,7 +216,8 @@ public class Parser {
             var row = t.get(nt);
             if (row.containsKey(term)) 
                 conf.add("CONFLICT M[" + nt + "][" + term + "]: " + row.get(term) + " vs " + p);
-            else row.put(term, p);
+            else 
+                row.put(term, p);
         }
 
         private static Map<String, Set<String>> mutableCopy(Map<String, Set<String>> src) {
@@ -319,7 +322,11 @@ public class Parser {
             case IDENT -> parseAssign();
             case PRINT -> parsePrint();
             case FOR   -> parseFor();
-            default    -> { errs.add(new ParserError("Unexpected " + peek().type, peek().line, "syntax")); skipLine(); yield null; }
+            default    -> { 
+                errs.add(new ParserError("Unexpected " + peek().type, peek().line, "syntax")); 
+                skipLine(); 
+                yield null; 
+            }
         };
     }
 
