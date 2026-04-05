@@ -185,6 +185,8 @@ html,body,#root{height:100%;font-family:var(--ui);background:var(--bg);color:var
 .tt-lit    {background:rgba(251,146,60,.1);color:var(--orange)}
 .tt-kw     {background:rgba(167,139,250,.1);color:var(--purple)}
 .tt-op     {background:rgba(74,222,128,.08);color:var(--green)}
+.tt-cond-kw {background:rgba(251,191,36,.1);color:var(--yellow)}
+.tt-cond-op {background:rgba(244,114,182,.1);color:var(--pink)}
 .tt-struct {background:rgba(148,163,184,.08);color:var(--muted)}
 .tt-def    {background:var(--s3);color:var(--text)}
 

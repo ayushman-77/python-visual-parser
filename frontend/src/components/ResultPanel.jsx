@@ -83,8 +83,10 @@ function ttCls(type) {
   if (!type) return "tt-def";
   if (type === "IDENT") return "tt-ident";
   if (["INT_LIT","FLOAT_LIT","STRING_LIT","BOOL_LIT"].includes(type)) return "tt-lit";
-  if (["FOR","IN","PRINT"].includes(type)) return "tt-kw";
-  if (["PLUS","MINUS","STAR","SLASH","ASSIGN","PLUS_ASSIGN","MINUS_ASSIGN"].includes(type)) return "tt-op";
+  if (["FOR","IN","PRINT","RANGE"].includes(type)) return "tt-kw";
+  if (["IF","ELSE","ELIF","WHILE"].includes(type)) return "tt-cond-kw";
+  if (["EQ","NEQ","LT","LE","GT","GE"].includes(type)) return "tt-cond-op";
+  if (["PLUS","MINUS","STAR","SLASH","MOD","ASSIGN","PLUS_ASSIGN","MINUS_ASSIGN"].includes(type)) return "tt-op";
   if (["NEWLINE","INDENT","DEDENT","EOF","LPAREN","RPAREN","LBRACKET","RBRACKET","COMMA","COLON"].includes(type)) return "tt-struct";
   return "tt-def";
 }
