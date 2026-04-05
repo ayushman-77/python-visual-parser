@@ -222,7 +222,11 @@ public class Main {
     public static void main(String[] args) {
         String source;
 
-        String filePath = (args.length > 0) ? args[0] : "C:\\Users\\ayush\\Desktop\\Projects\\python-visual-parser\\test.py";
+        String defaultPath = "../test.py";
+        if (!java.nio.file.Files.exists(java.nio.file.Path.of(defaultPath))) {
+            defaultPath = "test.py";
+        }
+        String filePath = (args.length > 0) ? args[0] : defaultPath;
 
         try {
             source = java.nio.file.Files.readString(java.nio.file.Path.of(filePath));
