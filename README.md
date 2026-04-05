@@ -30,7 +30,7 @@ It is designed as an **educational tool** for students learning compilers and pr
 
 ## 📸 Demo
 
-![Project Screenshot](./image.png)
+![Project Screenshot](./recording.gif)
 
 ---
 
@@ -42,7 +42,8 @@ python-visual-parser/
 ├── backend/       # Core parsing logic, AST, compiler stages
 ├── frontend/      # UI (editor + visualization)
 ├── middleware/    # API / communication layer
-├── image.png      # Demo screenshot
+├── recording.gif  # Demo recording
+├── test.py        # Example input file
 └── README.md
 ```
 
@@ -99,9 +100,20 @@ npm start
 ## 🧪 Example Input
 
 ```python
-a = 3
-b = [0,1,2,3,4,5]
-print(b[a] + 2)
+a = 5
+
+while a > 3:
+    print(a)
+    a-=1
+
+b = 4
+if a < 3:
+    print(b)
+else:
+    print(b*a)
+
+for i in range(1, 7, 2):
+    print(i)
 ```
 
 ---
@@ -120,6 +132,6 @@ This project helps you understand:
 
 ## 🛠️ Tech Stack
 
-- Frontend: HTML / CSS / JavaScript  
-- Backend: Python  
-- Middleware: API layer
+- Frontend: React / Vite / Cytoscape
+- Backend: Java / Spring Boot
+- Middleware: Node.js / Express

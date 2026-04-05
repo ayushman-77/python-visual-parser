@@ -1,5 +1,14 @@
-a = True
-arr = [1,9,6,2]
-s = "compiler"
-for i in s:
-    print(i, arr[3], s, a)
+a = 5
+
+while a > 3:
+    print(a)
+    a-=1
+
+b = 4
+if a < 3:
+    print(b)
+else:
+    print(b*a)
+
+for i in range(1, 7, 2):
+    print(i)
