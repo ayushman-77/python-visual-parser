@@ -438,7 +438,8 @@ public class Parser {
         expect(TokenType.NEWLINE);
         expect(TokenType.INDENT);
         sym.enterScope();
-        sym.declare(lv.value, VarType.UNKNOWN, lv.line);
+        VarType elementType = inferIterableElementType(iter);
+        sym.declare(lv.value, elementType, lv.line);
         List<StmtNode> body = parseStmtList();
         expect(TokenType.DEDENT);
         sym.exitScope();
@@ -613,10 +614,23 @@ public class Parser {
         };
     }
 
+    private VarType inferIterableElementType(ExprNode iterable) {
+        if (iterable instanceof RangeExprNode) {
+            return VarType.INT;
+        }
+        if (iterable instanceof ListLitNode list && !list.elements.isEmpty()) {
+            return inferType(list.elements.get(0));
+        }
+        if (inferType(iterable) == VarType.STR) {
+            return VarType.STR;
+        }
+        return VarType.UNKNOWN;
+    }
+
     private VarType inferType(ExprNode e) {
         if (e instanceof LiteralNode l)  
             return l.varType;
-        if (e instanceof ListLitNode)    
+        if (e instanceof ListLitNode || e instanceof RangeExprNode)    
             return VarType.LIST;
         if (e instanceof IdentNode id) { 
             var en = sym.lookup(id.name); 
