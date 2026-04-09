@@ -65,6 +65,36 @@ public class Main {
             out.symbolTable   = pr.symbolTable;
             out.parserErrors  = pr.errors;
 
+            java.util.Set<String> presentTokens = new java.util.HashSet<>();
+            presentTokens.add(Parser.Grammar.EOF);
+            for (Token t : lr.tokens) {
+                presentTokens.add(t.type.toString());
+            }
+
+            java.util.Map<String, java.util.Map<String, Parser.Production>> filteredTable = new java.util.LinkedHashMap<>();
+            for (String nt : Parser.Grammar.NON_TERMINALS) {
+                filteredTable.put(nt, new java.util.LinkedHashMap<>());
+            }
+            
+            for (java.util.Map.Entry<String, java.util.Map<String, Parser.Production>> entry : PARSE_TABLE.table.entrySet()) {
+                for (java.util.Map.Entry<String, Parser.Production> col : entry.getValue().entrySet()) {
+                    if (presentTokens.contains(col.getKey())) {
+                        filteredTable.get(entry.getKey()).put(col.getKey(), col.getValue());
+                    }
+                }
+            }
+
+            ParsingTable filteredPT = new ParsingTable(FF_RESULT);
+            try {
+                java.lang.reflect.Field field = ParsingTable.class.getDeclaredField("table");
+                field.setAccessible(true);
+                field.set(filteredPT, java.util.Collections.unmodifiableMap(filteredTable));
+            } catch (Exception e) {}
+            
+            out.parsingTable = filteredPT;
+            out.symbolTable   = pr.symbolTable;
+            out.parserErrors  = pr.errors;
+
             if (pr.ast != null) 
                 out.cfg = CFG.Builder.build(pr.ast);
 
@@ -129,8 +159,14 @@ public class Main {
             pt.table.forEach((nt, row) -> {
                 if (row.isEmpty()) 
                     return;
-                System.out.println("  " + CY + nt + R);
-                row.forEach((term, p) -> System.out.printf("    [%-20s] → %s%n", term, p));
+                System.out.println("  " + CY + BOLD + nt + R);
+                System.out.printf("    %-20s | %s%n", "Token", "Production");
+                System.out.println(DM + "    ---------------------+----------------------------------" + R);
+                row.forEach((term, p) -> {
+                    String pStr = p.toString().replace("→", "->").replace("ε", "EPSILON");
+                    System.out.printf("    %-20s | %s%n", term, pStr);
+                });
+                System.out.println();
             });
         }
 
@@ -149,8 +185,8 @@ public class Main {
         }
 
         static void astNode(AST.Node node, String pre, boolean last) {
-            String conn  = last ? "└── " : "├── ";
-            String child = pre + (last ? "    " : "│   ");
+            String conn  = last ? "\\-- " : "+-- ";
+            String child = pre + (last ? "    " : "|   ");
 
             if (node instanceof ProgramNode p) {
                 System.out.println(pre + conn + BOLD + "Program" + R);
@@ -186,17 +222,17 @@ public class Main {
             section("CONTROL FLOW GRAPH");
             System.out.println("  Nodes:");
             for (CFGNode n : g.nodes) {
-                String stmts = n.statements.isEmpty() ? "" : "  —  " + String.join(" | ", n.statements);
+            String stmts = n.statements.isEmpty() ? "" : "  ::  " + String.join(" | ", n.statements);
                 System.out.printf("    [%2d] %-16s%s%n", n.id, n.kind, stmts);
             }
             System.out.println("\n  Edges:");
             for (CFGEdge e : g.edges)
-                System.out.printf("    %2d → %2d%s%n", e.from, e.to, e.label.isEmpty() ? "" : " (" + e.label + ")");
+                System.out.printf("    %2d -> %2d%s%n", e.from, e.to, e.label.isEmpty() ? "" : " (" + e.label + ")");
         }
 
         static void errors(CompilerResult r) {
             if (!r.hasErrors()) { 
-                System.out.println("\n" + GN + "  ✓ No errors." + R); 
+                System.out.println("\n" + GN + "  [OK] No errors." + R); 
                 return; 
             }
             section("ERRORS");
@@ -205,17 +241,17 @@ public class Main {
         }
 
         static void header(String t) {
-            System.out.println("\n" + BOLD + "═".repeat(62));
+            System.out.println("\n" + BOLD + "=".repeat(62));
             System.out.printf("  %s%n", t);
-            System.out.println("═".repeat(62) + R + "\n");
+            System.out.println("=".repeat(62) + R + "\n");
         }
 
         static void section(String t) {
-            System.out.println("\n" + BOLD + CY + "── " + t + " " + "─".repeat(Math.max(0, 57 - t.length())) + R);
+            System.out.println("\n" + BOLD + CY + "== " + t + " " + "=".repeat(Math.max(0, 57 - t.length())) + R);
         }
 
         static void sep(int w) { 
-            System.out.println(DM + "─".repeat(w) + R); 
+            System.out.println(DM + "-".repeat(w) + R); 
         }
     }
 
@@ -241,9 +277,9 @@ public class Main {
         }
 
         System.out.println("Source: " + filePath);
-        System.out.println("─".repeat(50));
+        System.out.println("-".repeat(50));
         System.out.println(source);
-        System.out.println("─".repeat(50));
+        System.out.println("-".repeat(50));
         Display.show(Pipeline.compile(source));
     }
 }
