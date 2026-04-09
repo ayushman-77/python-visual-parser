@@ -2,13 +2,13 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Editor, { DEFAULT_CODE } from "./components/Editor.jsx";
 import ResultPanel from "./components/ResultPanel.jsx";
 
-const API    = "/api";
-const PHASE  = { IDLE:"idle", RUNNING:"running", DONE:"done" };
+const API = "/api";
+const PHASE = { IDLE: "idle", RUNNING: "running", DONE: "done" };
 
 export default function App() {
-  const [code,      setCode]      = useState(DEFAULT_CODE);
-  const [result,    setResult]    = useState(null);
-  const [phase,     setPhase]     = useState(PHASE.IDLE);
+  const [code, setCode] = useState(DEFAULT_CODE);
+  const [result, setResult] = useState(null);
+  const [phase, setPhase] = useState(PHASE.IDLE);
   const [apiStatus, setApiStatus] = useState("unknown");
   const [leftWidth, setLeftWidth] = useState(42);
 
@@ -25,7 +25,7 @@ export default function App() {
     setPhase(PHASE.RUNNING);
     setResult(null);
     try {
-      const res  = await fetch(`${API}/compile`, {
+      const res = await fetch(`${API}/compile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code }),
@@ -35,18 +35,18 @@ export default function App() {
       setResult(data);
     } catch (err) {
       setResult({
-        tokens:[], symbolTable:[], ast:null, cfg:null,
-        firstFollow:null, parsingTable:null,
-        lexerErrors:[],
-        parserErrors:[{ message:err.message, line:0, phase:"network" }],
+        tokens: [], symbolTable: [], ast: null, cfg: null,
+        firstFollow: null, parsingTable: null,
+        lexerErrors: [],
+        parserErrors: [{ message: err.message, line: 0, phase: "network" }],
       });
     } finally {
       setPhase(PHASE.DONE);
     }
   }, [code, phase]);
 
-  const dragging    = useRef(false);
-  const wrapRef     = useRef(null);
+  const dragging = useRef(false);
+  const wrapRef = useRef(null);
 
   const onDragStart = useCallback(e => {
     e.preventDefault();
@@ -59,7 +59,7 @@ export default function App() {
     const move = e => {
       if (!dragging.current || !wrapRef.current) return;
       const rect = wrapRef.current.getBoundingClientRect();
-      const pct  = ((e.clientX - rect.left) / rect.width) * 100;
+      const pct = ((e.clientX - rect.left) / rect.width) * 100;
       setLeftWidth(Math.min(65, Math.max(25, pct)));
     };
     const up = () => {
@@ -78,21 +78,21 @@ export default function App() {
     : 0;
 
   const statusLabel = {
-    ok:"All services online", warn:"Java unreachable",
-    error:"Middleware down", loading:"Checking…", unknown:"",
+    ok: "All services online", warn: "Java unreachable",
+    error: "Middleware down", loading: "Checking…", unknown: "",
   }[apiStatus] ?? "";
 
   return (
     <div className="app">
 
-      {}
+      { }
       <header className="header">
         <div className="header-logo">
           <div className="header-logo-icon">⚙</div>
           <span className="header-logo-text">Compiler IDE</span>
         </div>
         <div className="header-sep" />
-        <span className="header-sub">A3-5 · Python-like Language</span>
+        <span className="header-sub">Python-like Language</span>
 
         <div className="header-spacer" />
 
@@ -114,10 +114,10 @@ export default function App() {
         </button>
       </header>
 
-      {}
+      { }
       <div className="workspace" ref={wrapRef}>
 
-        {}
+        { }
         <div className="left-pane" style={{ width: `${leftWidth}%` }}>
           <ResultPanel
             result={result}
@@ -128,7 +128,7 @@ export default function App() {
 
         <div className="divider" onMouseDown={onDragStart} />
 
-        {}
+        { }
         <div className="right-pane">
           <Editor
             code={code}
@@ -137,7 +137,7 @@ export default function App() {
             loading={phase === PHASE.RUNNING}
           />
 
-          {}
+          { }
           {phase === PHASE.DONE && result && (
             <div className={`sbar ${errCount > 0 ? "sbar-err" : "sbar-ok"}`}>
               <div className="sbar-icon">{errCount > 0 ? "✕" : "✓"}</div>

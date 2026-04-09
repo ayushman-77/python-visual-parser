@@ -167,7 +167,7 @@ public class Parser {
                     break; 
                 }
             }
-            if (allNullable && !syms.isEmpty()) 
+            if (allNullable) 
                 out.add(Grammar.EPSILON);
             return out;
         }

@@ -84,11 +84,62 @@ public class Main {
                 }
             }
 
+            java.util.Set<String> reachableNT = new java.util.HashSet<>();
+            java.util.Queue<String> queue = new java.util.LinkedList<>();
+            reachableNT.add(Parser.Grammar.START);
+            queue.add(Parser.Grammar.START);
+            
+            while (!queue.isEmpty()) {
+                String nt = queue.poll();
+                for (Parser.Production p : filteredTable.get(nt).values()) {
+                    for (String sym : p.rhs) {
+                        if (Parser.Grammar.isNonTerminal(sym) && reachableNT.add(sym)) {
+                            queue.add(sym);
+                        }
+                    }
+                }
+            }
+
+            java.util.Map<String, java.util.Map<String, Parser.Production>> reachableTable = new java.util.LinkedHashMap<>();
+            java.util.Map<String, java.util.Set<String>> filteredFirst = new java.util.LinkedHashMap<>();
+            java.util.Map<String, java.util.Set<String>> filteredFollow = new java.util.LinkedHashMap<>();
+
+            for (String nt : Parser.Grammar.NON_TERMINALS) {
+                if (!reachableNT.contains(nt)) {
+                    continue;
+                }
+                
+                reachableTable.put(nt, filteredTable.get(nt));
+                
+                java.util.Set<String> fFirst = new java.util.LinkedHashSet<>();
+                for (String t : FF_RESULT.first.getOrDefault(nt, java.util.Collections.emptySet())) {
+                    if (presentTokens.contains(t) || t.equals(Parser.Grammar.EPSILON)) {
+                        fFirst.add(t);
+                    }
+                }
+                
+                java.util.Set<String> fFollow = new java.util.LinkedHashSet<>();
+                for (String t : FF_RESULT.follow.getOrDefault(nt, java.util.Collections.emptySet())) {
+                    if (presentTokens.contains(t) || t.equals(Parser.Grammar.EPSILON)) {
+                        fFollow.add(t);
+                    }
+                }
+                
+                filteredFirst.put(nt, fFirst);
+                filteredFollow.put(nt, fFollow);
+            }
+            
+            FirstFollowResult filteredFF = new FirstFollowResult(
+                java.util.Collections.unmodifiableMap(filteredFirst),
+                java.util.Collections.unmodifiableMap(filteredFollow)
+            );
+            out.firstFollow = filteredFF;
+
             ParsingTable filteredPT = new ParsingTable(FF_RESULT);
             try {
                 java.lang.reflect.Field field = ParsingTable.class.getDeclaredField("table");
                 field.setAccessible(true);
-                field.set(filteredPT, java.util.Collections.unmodifiableMap(filteredTable));
+                field.set(filteredPT, java.util.Collections.unmodifiableMap(reachableTable));
             } catch (Exception e) {}
             
             out.parsingTable = filteredPT;
