@@ -246,7 +246,7 @@ export default function App() {
 // Removed localStorage sync to avoid persisting code between sessions
   // useEffect(() => {
   //   try {
-  //     localStorage.setItem("pylite_code", code);
+  //     localStorage.setItem("python_code", code);
   //   } catch (_) {}
   // }, [code]);
 

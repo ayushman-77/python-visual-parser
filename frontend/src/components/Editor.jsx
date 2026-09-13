@@ -51,8 +51,8 @@ export default function Editor({ code, onChange, onCompile, loading, onEditorMou
 
   const onMount = (editor, monaco) => {
     editorRef.current = editor;
-    monaco.languages.register({ id: "pylite" });
-    monaco.languages.setMonarchTokensProvider("pylite", {
+    monaco.languages.register({ id: "python" });
+    monaco.languages.setMonarchTokensProvider("python", {
       keywords: ["for","in","while","if","elif","else","print","range","True","False"],
       tokenizer: {
         root: [
@@ -154,7 +154,7 @@ export default function Editor({ code, onChange, onCompile, loading, onEditorMou
       </div>
       <div className="monaco-wrapper">
         <MonacoEditor
-          language="pylite"
+          language="python"
           value={code}
           onChange={(val) => onChange(val ?? "")}
           onMount={onMount}

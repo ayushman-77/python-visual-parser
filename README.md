@@ -62,7 +62,7 @@ Write code in the Monaco editor, hit **▶ Run**, and instantly see tokens, AST,
 - Pipeline stage indicators showing which stages passed or failed
 
 ### ✏️ Monaco Editor
-- Custom `pylite` language with full syntax highlighting
+- Custom `python` language with full syntax highlighting
 - Auto-indent on Enter (adds 4 spaces after `:`)
 - Bracket pair colorization and indent guides
 
@@ -166,7 +166,7 @@ npm run dev
 
 ---
 
-## 📝 Supported Language (PyLite)
+## 📝 Supported Language
 
 ```python
 # Assignment & compound assignment
