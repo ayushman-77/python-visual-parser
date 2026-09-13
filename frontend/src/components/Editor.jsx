@@ -17,44 +17,14 @@ for i in range(1, 7, 2):
     print(i)
 `;
 
-export function formatPythonCode(source) {
-  if (!source) return source;
-  const lines = source.split("\n");
-  const formatted = [];
-  let indent = 0;
-  const isBlockStarter = (s) => s.endsWith(":");
-  const isDedent = (s) => s.startsWith("elif ") || s.startsWith("else:");
 
-  for (let i = 0; i < lines.length; i++) {
-    const trimmed = lines[i].trim();
-    if (trimmed === "") { formatted.push(""); continue; }
-    if (trimmed.startsWith("#")) { formatted.push("    ".repeat(indent) + trimmed); continue; }
-
-    if (isDedent(trimmed)) {
-      formatted.push("    ".repeat(Math.max(0, indent - 1)) + trimmed);
-    } else {
-      formatted.push("    ".repeat(indent) + trimmed);
-    }
-
-    const nextIdx = lines.slice(i + 1).findIndex(l => l.trim() !== "");
-    if (nextIdx !== -1) {
-      const nextTrim = lines[i + 1 + nextIdx].trim();
-      if (isBlockStarter(trimmed)) {
-        indent++;
-      } else if (!isDedent(nextTrim) && indent > 0 && !isBlockStarter(nextTrim)) {
-        indent--;
-      }
-    }
-  }
-  return formatted.join("\n");
-}
 
 export default function Editor({ code, onChange, onCompile, loading, onEditorMount }) {
   const fileRef = useRef();
   const editorRef = useRef(null);
   const [stats, setStats] = useState({ lines: 0, chars: 0 });
   const [copied, setCopied] = useState(false);
-  const [formatted, setFormatted] = useState(false);
+
 
   useEffect(() => {
     setStats({ lines: code ? code.split("\n").length : 0, chars: code ? code.length : 0 });
@@ -77,12 +47,7 @@ export default function Editor({ code, onChange, onCompile, loading, onEditorMou
     });
   };
 
-  const handleFormat = () => {
-    if (!code) return;
-    onChange(formatPythonCode(code));
-    setFormatted(true);
-    setTimeout(() => setFormatted(false), 1600);
-  };
+
 
   const onMount = (editor, monaco) => {
     editorRef.current = editor;
@@ -177,9 +142,7 @@ export default function Editor({ code, onChange, onCompile, loading, onEditorMou
               <span className={stats.chars > 0 ? "active" : ""}>{stats.chars}C</span>
             </div>
           )}
-          <button className="btn btn-ghost" style={{ fontSize: 12, padding: "4px 10px" }} onClick={handleFormat} disabled={!hasCode} title="Format">
-            {formatted ? "Formatted" : "Format"}
-          </button>
+
           <button className="btn btn-ghost" style={{ fontSize: 12, padding: "4px 10px" }} onClick={handleCopy} disabled={!hasCode} title="Copy">
             {copied ? "Copied" : "Copy"}
           </button>

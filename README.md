@@ -65,7 +65,7 @@ Write code in the Monaco editor, hit **▶ Run**, and instantly see tokens, AST,
 - Custom `pylite` language with full syntax highlighting
 - Auto-indent on Enter (adds 4 spaces after `:`)
 - Bracket pair colorization and indent guides
-- **Format button** — normalizes operator spacing and indentation
+
 
 ### 📂 File Upload
 - Upload any `.py` or `.txt` file directly into the editor
@@ -123,6 +123,19 @@ Write code in the Monaco editor, hit **▶ Run**, and instantly see tokens, AST,
 
 - **Java 17+** and **Maven**
 - **Node.js 18+** and **npm**
+
+### Run with Docker (Recommended)
+
+Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) or Docker Compose.
+
+```bash
+docker-compose up --build
+```
+- Frontend: [http://localhost:5173](http://localhost:5173)
+- Middleware: http://localhost:3001
+- Backend: http://localhost:7070
+
+---
 
 ### Run Manually (3 terminals)
 

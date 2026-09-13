@@ -100,7 +100,7 @@ function SamplePicker({ onSelect }) {
 function ShortcutsModal({ onClose }) {
   const shortcuts = [
     { desc: "Run compiler & update AST/CFG", keys: ["Ctrl", "Enter"] },
-    { desc: "Format code indentation & operators", keys: ["Alt", "Shift", "F"] },
+
     { desc: "Copy editor code to clipboard", keys: ["⎘ Copy button"] },
     { desc: "Toggle keyboard shortcuts help", keys: ["?"] },
     { desc: "Close open dialog or dropdown", keys: ["Esc"] },

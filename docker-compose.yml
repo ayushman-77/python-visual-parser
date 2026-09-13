@@ -1,0 +1,29 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "7070:7070"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7070/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  middleware:
+    build:
+      context: ./middleware
+    ports:
+      - "3001:3001"
+    environment:
+      - JAVA_HOST=http://backend:7070
+    depends_on:
+      - backend
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - middleware
