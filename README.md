@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧠 Compiler IDE — Python Visual Parser
+# Python Visual Parser
 
 **An interactive, educational Compiler IDE that visualizes every stage of compilation for a Python-like language in real-time.**
 
