@@ -33,6 +33,7 @@ public class Main {
         public ParsingTable         parsingTable;
         public List<LexerError>     lexerErrors  = new ArrayList<>();
         public List<ParserError>    parserErrors = new ArrayList<>();
+        public List<String>         output;
 
         public boolean hasErrors()  { 
             return !lexerErrors.isEmpty() || !parserErrors.isEmpty(); 
@@ -146,8 +147,13 @@ public class Main {
             out.symbolTable   = pr.symbolTable;
             out.parserErrors  = pr.errors;
 
-            if (pr.ast != null) 
+            if (pr.ast != null && out.lexerErrors.isEmpty() && out.parserErrors.isEmpty()) {
                 out.cfg = CFG.Builder.build(pr.ast);
+                Interpreter interp = new Interpreter();
+                interp.execute(pr.ast);
+                out.output = interp.getOutput();
+                out.parserErrors.addAll(interp.getSemanticErrors());
+            }
 
             return out;
         }

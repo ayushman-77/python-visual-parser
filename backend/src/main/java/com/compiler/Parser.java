@@ -38,11 +38,13 @@ public class Parser {
             "program","stmt_list","stmt",
             "assign_stmt","assign_op", "condition_stmt", "condition_op",
             "print_stmt","for_stmt", "while_stmt", "range_stmt",
+            "def_stmt", "return_stmt", "import_stmt",
             "if_stmt", "elif_stmt", "else_stmt", "optional_else",
             "expr_list","expr_list_tail",
             "expr","expr_prime",
             "term","term_prime",
-            "factor","factor_tail","literal","list_lit","list_contents"
+            "factor","factor_tail","literal","list_lit","list_contents",
+            "opt_ident_list", "ident_list", "ident_list_tail", "opt_expr", "opt_expr_list"
         );
 
         public static final List<Production> ALL = List.of(
@@ -54,6 +56,9 @@ public class Parser {
             new Production(5,  "stmt",           List.of("for_stmt")),
             new Production(6,  "stmt",           List.of("while_stmt")),
             new Production(7,  "stmt",           List.of("if_stmt")),
+            new Production(100, "stmt",          List.of("def_stmt")),
+            new Production(101, "stmt",          List.of("return_stmt")),
+            new Production(102, "stmt",          List.of("import_stmt")),
             new Production(8,  "assign_stmt",    List.of("IDENT","assign_op","expr","NEWLINE")),
             new Production(9,  "assign_op",      List.of("ASSIGN")),
             new Production(10, "assign_op",      List.of("PLUS_ASSIGN")),
@@ -74,6 +79,9 @@ public class Parser {
             new Production(25, "factor",         List.of("LPAREN","expr","RPAREN")),
             new Production(26, "factor",         List.of("IDENT","factor_tail")),
             new Production(27, "factor_tail",    List.of("LBRACKET","expr","RBRACKET")),
+            new Production(103, "factor_tail",   List.of("LPAREN","opt_expr_list","RPAREN")),
+            new Production(104, "opt_expr_list", List.of("expr_list")),
+            new Production(115, "opt_expr_list", List.of(Grammar.EPSILON)),
             new Production(28, "factor_tail",    List.of(Grammar.EPSILON)),
             new Production(29, "factor",         List.of("literal")),
             new Production(30, "literal",        List.of("INT_LIT")),
@@ -106,7 +114,17 @@ public class Parser {
             new Production(57, "optional_else",  List.of("else_stmt")),
             new Production(58, "optional_else",  List.of(Grammar.EPSILON)),
             new Production(59, "elif_stmt",      List.of("ELIF", "expr", "COLON", "NEWLINE", "INDENT", "stmt_list", "DEDENT", "optional_else")),
-            new Production(60, "else_stmt",      List.of("ELSE", "COLON", "NEWLINE", "INDENT", "stmt_list", "DEDENT"))
+            new Production(60, "else_stmt",      List.of("ELSE", "COLON", "NEWLINE", "INDENT", "stmt_list", "DEDENT")),
+            new Production(105, "def_stmt",      List.of("DEF", "IDENT", "LPAREN", "opt_ident_list", "RPAREN", "COLON", "NEWLINE", "INDENT", "stmt_list", "DEDENT")),
+            new Production(106, "opt_ident_list",List.of("ident_list")),
+            new Production(107, "opt_ident_list",List.of(Grammar.EPSILON)),
+            new Production(108, "ident_list",    List.of("IDENT", "ident_list_tail")),
+            new Production(109, "ident_list_tail",List.of("COMMA", "IDENT", "ident_list_tail")),
+            new Production(110, "ident_list_tail",List.of(Grammar.EPSILON)),
+            new Production(111, "return_stmt",   List.of("RETURN", "opt_expr", "NEWLINE")),
+            new Production(112, "opt_expr",      List.of("expr")),
+            new Production(113, "opt_expr",      List.of(Grammar.EPSILON)),
+            new Production(114, "import_stmt",   List.of("IMPORT", "IDENT", "NEWLINE"))
         );
 
         public static boolean isNonTerminal(String s) { 
@@ -341,7 +359,7 @@ public class Parser {
 
     private boolean isStmtStart() {
         return switch (peek().type) { 
-            case IDENT, PRINT, FOR, WHILE, INT_LIT, FLOAT_LIT, STRING_LIT, BOOL_LIT, LBRACKET, LPAREN, RANGE, IF, ELIF, ELSE -> true; 
+            case IDENT, PRINT, FOR, WHILE, INT_LIT, FLOAT_LIT, STRING_LIT, BOOL_LIT, LBRACKET, LPAREN, RANGE, IF, ELIF, ELSE, DEF, RETURN, IMPORT -> true; 
             default -> false; 
         };
     }
@@ -359,6 +377,9 @@ public class Parser {
             case PRINT -> parsePrint();
             case FOR -> parseFor();
             case WHILE -> parseWhile();
+            case DEF -> parseDef();
+            case RETURN -> parseReturn();
+            case IMPORT -> parseImport();
             case INT_LIT, FLOAT_LIT, STRING_LIT, BOOL_LIT, LBRACKET, LPAREN, RANGE -> parseExprStmt();
             case IF -> parseIf();
             case ELIF -> {
@@ -444,6 +465,52 @@ public class Parser {
         expect(TokenType.DEDENT);
         sym.exitScope();
         return new ForStmtNode(lv.value, iter, body, ft.line);
+    }
+
+    private FunctionDefNode parseDef() {
+        Token defToken = expect(TokenType.DEF);
+        Token nameToken = expect(TokenType.IDENT);
+        expect(TokenType.LPAREN);
+        List<String> params = new ArrayList<>();
+        if (at(TokenType.IDENT)) {
+            params.add(consume().value);
+            while (at(TokenType.COMMA)) {
+                consume();
+                params.add(expect(TokenType.IDENT).value);
+            }
+        }
+        expect(TokenType.RPAREN);
+        expect(TokenType.COLON);
+        expect(TokenType.NEWLINE);
+        expect(TokenType.INDENT);
+        
+        sym.enterScope();
+        for (String p : params) {
+            sym.declare(p, VarType.UNKNOWN, nameToken.line);
+        }
+        List<StmtNode> body = parseStmtList();
+        expect(TokenType.DEDENT);
+        sym.exitScope();
+        
+        sym.declare(nameToken.value, VarType.UNKNOWN, nameToken.line);
+        return new FunctionDefNode(nameToken.value, params, body, defToken.line);
+    }
+
+    private ReturnStmtNode parseReturn() {
+        Token retToken = expect(TokenType.RETURN);
+        ExprNode val = null;
+        if (!at(TokenType.NEWLINE)) {
+            val = parseCondition();
+        }
+        expect(TokenType.NEWLINE);
+        return new ReturnStmtNode(val, retToken.line);
+    }
+
+    private ImportStmtNode parseImport() {
+        Token impToken = expect(TokenType.IMPORT);
+        Token moduleToken = expect(TokenType.IDENT);
+        expect(TokenType.NEWLINE);
+        return new ImportStmtNode(moduleToken.value, impToken.line);
     }
 
     private WhileStmtNode parseWhile() {
@@ -567,19 +634,23 @@ public class Parser {
             case IDENT -> {
                 consume();
 
-                if (!sym.isDeclared(t.value))
-                    errs.add(new ParserError("Undeclared variable '" + t.value + "'", t.line, "semantic"));
-
                 ExprNode base = new IdentNode(t.value, t.line);
 
                 if (at(TokenType.LBRACKET)) {
+                    if (!sym.isDeclared(t.value))
+                        errs.add(new ParserError("Undeclared variable '" + t.value + "'", t.line, "semantic"));
                     consume();
-
                     ExprNode index = parseExpr();
-
                     expect(TokenType.RBRACKET);
-
                     base = new IndexNode(base, index, t.line);
+                } else if (at(TokenType.LPAREN)) {
+                    consume();
+                    List<ExprNode> args = at(TokenType.RPAREN) ? new ArrayList<>() : parseExprList();
+                    expect(TokenType.RPAREN);
+                    base = new CallExprNode(t.value, args, t.line);
+                } else {
+                    if (!sym.isDeclared(t.value))
+                        errs.add(new ParserError("Undeclared variable '" + t.value + "'", t.line, "semantic"));
                 }
 
                 yield base;

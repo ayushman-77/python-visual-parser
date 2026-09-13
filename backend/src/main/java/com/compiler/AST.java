@@ -198,4 +198,50 @@ public class AST {
             this.line = line;
         }
     }
+
+    public static class FunctionDefNode extends StmtNode {
+        public final String name;
+        public final List<String> params;
+        public final List<StmtNode> body;
+        public final int line;
+        public FunctionDefNode(String name, List<String> params, List<StmtNode> body, int line) {
+            super("FunctionDef");
+            this.name = name;
+            this.params = List.copyOf(params);
+            this.body = List.copyOf(body);
+            this.line = line;
+        }
+    }
+
+    public static class ReturnStmtNode extends StmtNode {
+        public final ExprNode value; 
+        public final int line;
+        public ReturnStmtNode(ExprNode value, int line) {
+            super("ReturnStmt");
+            this.value = value;
+            this.line = line;
+        }
+    }
+
+    public static class ImportStmtNode extends StmtNode {
+        public final String module;
+        public final int line;
+        public ImportStmtNode(String module, int line) {
+            super("ImportStmt");
+            this.module = module;
+            this.line = line;
+        }
+    }
+
+    public static class CallExprNode extends ExprNode {
+        public final String functionName;
+        public final List<ExprNode> args;
+        public final int line;
+        public CallExprNode(String functionName, List<ExprNode> args, int line) {
+            super("CallExpr");
+            this.functionName = functionName;
+            this.args = List.copyOf(args);
+            this.line = line;
+        }
+    }
 }

@@ -1,30 +1,52 @@
-# Python
+# ── Python ────────────────────────────────────────
 __pycache__/
 *.pyc
+*.pyo
 
 # Virtual environments
 venv/
 env/
 .venv/
 
-# IDE files
-.idea/
-.vscode/
+# Test / scratch scripts at root
+test.py
 
-# Node
+# ── Java / Maven ───────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+*.log
+.mvn/wrapper/maven-wrapper.jar
+
+# ── Node / Frontend ────────────────────────────────
 node_modules/
 dist/
 build/
+.npm/
 
-# Java / Maven
-target/
-*.class
-*.log
-.mvn/
+# ── IDE / Editor ──────────────────────────────────
+.idea/
+.vscode/
+*.iml
+*.suo
+*.user
+.classpath
+.project
+.settings/
 
-# OS
+# ── OS ────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Env
+# ── Env / Secrets ─────────────────────────────────
 .env
+.env.local
+.env.*.local
+
+# ── Scripts / Automation ──────────────────────────
+*.ps1
+
+# ── Media / Recordings ────────────────────────────
+recording.gif

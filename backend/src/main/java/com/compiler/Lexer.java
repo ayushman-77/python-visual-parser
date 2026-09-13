@@ -14,12 +14,13 @@ public class Lexer {
         INT_LIT, FLOAT_LIT, STRING_LIT, BOOL_LIT,
         IDENT,
         WHILE, FOR, IN, RANGE, PRINT,
+        DEF, RETURN, IMPORT, FROM, AS,
         PLUS, MINUS, STAR, SLASH, MOD,
         EQ, NEQ, LT, LE, GT, GE,
         IF, ELIF, ELSE,
         ASSIGN, PLUS_ASSIGN, MINUS_ASSIGN,
         LPAREN, RPAREN, LBRACKET, RBRACKET,
-        COMMA, COLON,
+        COMMA, COLON, DOT,
         NEWLINE, INDENT, DEDENT,
         EOF, UNKNOWN
     }
@@ -68,12 +69,12 @@ public class Lexer {
         new TokenRule(TokenType.FLOAT_LIT,    Pattern.compile("\\d+\\.\\d+")),
         new TokenRule(TokenType.INT_LIT,      Pattern.compile("\\d+")),
         new TokenRule(TokenType.STRING_LIT,   Pattern.compile("\"[^\"]*\"|'[^']*'")),
-        new TokenRule(TokenType.PLUS_ASSIGN,  Pattern.compile("\\+=")),
-        new TokenRule(TokenType.MINUS_ASSIGN, Pattern.compile("-=")),
-        new TokenRule(TokenType.EQ,           Pattern.compile("==")),
-        new TokenRule(TokenType.NEQ,          Pattern.compile("!=")),
-        new TokenRule(TokenType.LE,           Pattern.compile("<=")),
-        new TokenRule(TokenType.GE,           Pattern.compile(">=")),
+        new TokenRule(TokenType.PLUS_ASSIGN,  Pattern.compile("\\+\\s*=")),
+        new TokenRule(TokenType.MINUS_ASSIGN, Pattern.compile("-\\s*=")),
+        new TokenRule(TokenType.EQ,           Pattern.compile("=\\s*=")),
+        new TokenRule(TokenType.NEQ,          Pattern.compile("!\\s*=")),
+        new TokenRule(TokenType.LE,           Pattern.compile("<\\s*=")),
+        new TokenRule(TokenType.GE,           Pattern.compile(">\\s*=")),
         new TokenRule(TokenType.ASSIGN,       Pattern.compile("=")),
         new TokenRule(TokenType.PLUS,         Pattern.compile("\\+")),
         new TokenRule(TokenType.MINUS,        Pattern.compile("-")),
@@ -88,20 +89,26 @@ public class Lexer {
         new TokenRule(TokenType.RBRACKET,     Pattern.compile("\\]")),
         new TokenRule(TokenType.COMMA,        Pattern.compile(",")),
         new TokenRule(TokenType.COLON,        Pattern.compile(":")),
+        new TokenRule(TokenType.DOT,          Pattern.compile("\\.")),
         new TokenRule(TokenType.IDENT,        Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*"))
     );
 
-    private static final Map<String, TokenType> KEYWORDS = Map.of(
-        "while", TokenType.WHILE,
-        "for",   TokenType.FOR,
-        "in",    TokenType.IN,
-        "range", TokenType.RANGE,
-        "print", TokenType.PRINT,
-        "True",  TokenType.BOOL_LIT,
-        "False", TokenType.BOOL_LIT,
-        "if",    TokenType.IF,
-        "elif",  TokenType.ELIF,
-        "else",  TokenType.ELSE
+    private static final Map<String, TokenType> KEYWORDS = Map.ofEntries(
+        Map.entry("while", TokenType.WHILE),
+        Map.entry("for",   TokenType.FOR),
+        Map.entry("in",    TokenType.IN),
+        Map.entry("range", TokenType.RANGE),
+        Map.entry("print", TokenType.PRINT),
+        Map.entry("True",  TokenType.BOOL_LIT),
+        Map.entry("False", TokenType.BOOL_LIT),
+        Map.entry("if",    TokenType.IF),
+        Map.entry("elif",  TokenType.ELIF),
+        Map.entry("else",  TokenType.ELSE),
+        Map.entry("def",   TokenType.DEF),
+        Map.entry("return",TokenType.RETURN),
+        Map.entry("import",TokenType.IMPORT),
+        Map.entry("from",  TokenType.FROM),
+        Map.entry("as",    TokenType.AS)
     );
 
     private final String           source;
@@ -169,12 +176,21 @@ public class Lexer {
             for (TokenRule rule : RULES) {
                 Matcher m = rule.pattern().matcher(rem);
                 if (m.lookingAt()) {
-                    String val = m.group();
+                    String rawVal = m.group();
                     TokenType type = rule.type();
-                    if (type == TokenType.IDENT && KEYWORDS.containsKey(val)) 
-                        type = KEYWORDS.get(val);
+                    if (type == TokenType.IDENT && KEYWORDS.containsKey(rawVal)) 
+                        type = KEYWORDS.get(rawVal);
+
+                    String val = rawVal;
+                    if (type == TokenType.NEQ) val = "!=";
+                    else if (type == TokenType.EQ) val = "==";
+                    else if (type == TokenType.LE) val = "<=";
+                    else if (type == TokenType.GE) val = ">=";
+                    else if (type == TokenType.PLUS_ASSIGN) val = "+=";
+                    else if (type == TokenType.MINUS_ASSIGN) val = "-=";
+
                     tokens.add(new Token(type, val, ln));
-                    pos += val.length();
+                    pos += rawVal.length();
                     matched = true;
                     break;
                 }
