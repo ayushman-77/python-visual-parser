@@ -161,9 +161,6 @@ npm install        # first time only
 npm run dev
 # Open http://localhost:5173
 ```
-
-> **Tip:** Start the Java backend first. The middleware and frontend can be started in any order after that.
-
 ---
 
 ## 📝 Supported Language
@@ -223,8 +220,6 @@ result = (a + b) * c % d
 | **Frontend** | React 18, Vite, Monaco Editor, Cytoscape.js + dagre |
 | **Backend** | Java 17, Spring Boot 3, hand-written LL(1) recursive-descent parser |
 | **Middleware** | Node.js 18, Express, Axios |
-| **Fonts** | Inter (UI), JetBrains Mono (code) |
-| **Design** | Custom CSS — glassmorphism dark theme, micro-animations |
 
 ---
 
