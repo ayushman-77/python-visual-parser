@@ -97,21 +97,21 @@ Write code in the Monaco editor, hit **▶ Run**, and instantly see tokens, AST,
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  Browser  (http://localhost:5173)                   │
+│         Browser  (http://localhost:5173)            │
 │  React 18 + Vite + Monaco Editor + Cytoscape.js     │
 └───────────────────────┬─────────────────────────────┘
                         │  /api/*  (Vite proxy)
                         ▼
 ┌─────────────────────────────────────────────────────┐
-│  Node.js Middleware  (http://localhost:3001)        │
-│  Express — validates, logs, proxies to Java         │
+│    Node.js Middleware  (http://localhost:3001)      │
+│    Express — validates, logs, proxies to Java       │
 └───────────────────────┬─────────────────────────────┘
                         │  POST /api/compile
                         ▼
 ┌─────────────────────────────────────────────────────┐
 │  Java Spring Boot Backend  (http://localhost:7070)  │
-│  Lexer → Parser → AST → Symbol Table → CFG          │
-│         → Interpreter → First/Follow → LL(1) Table  │
+│     Lexer → Parser → AST → Symbol Table → CFG       │
+│     → Interpreter → First/Follow → LL(1) Table      │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -198,7 +198,6 @@ first = items[0]
 # Arithmetic:  +  -  *  /  %
 result = (a + b) * c % d
 
-# Comparisons: ==  !=  <  <=  >  >=
 ```
 
 ### Token Reference
